@@ -59,3 +59,4 @@ Central config: `src/lib/time-slots/`. Events are auto-classified into morning/e
 - All mutations authorize on the server via session role checks.
 # COYOTE
 # COYOTE
+# COYOTE
