@@ -3,30 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import {
-  CalendarDays,
-  Eye,
-  EyeOff,
-  Loader2,
-  Lock,
-  ShieldCheck,
-  Sparkles,
-  User,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { loginAction, setupInitialAdmin } from "@/actions/auth";
-import { SchedulerIllustration } from "@/components/illustrations/scheduler-character";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-const highlights = [
-  { icon: CalendarDays, label: "Calendar & timetable views" },
-  { icon: Sparkles, label: "Smart slot classification" },
-  { icon: Users, label: "Roles for admins & staff" },
-  { icon: ShieldCheck, label: "Audit-ready changes" },
-];
 
 export default function LoginForm() {
   const router = useRouter();
@@ -68,7 +50,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
+    <div className="relative flex h-dvh max-h-dvh flex-col overflow-hidden">
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
@@ -87,9 +69,9 @@ export default function LoginForm() {
         }}
       />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-5">
+      <header className="relative z-10 mx-auto flex w-full max-w-md shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="neu-raised-sm flex h-11 w-11 items-center justify-center rounded-2xl text-[#3B82F6]">
+          <div className="glass flex h-11 w-11 items-center justify-center rounded-2xl text-[#3B82F6]">
             <CalendarDays className="h-5 w-5" strokeWidth={2.25} aria-hidden />
           </div>
           <div>
@@ -106,57 +88,28 @@ export default function LoginForm() {
         </p>
       </header>
 
-      <main className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-6 pb-12 pt-4 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        <section className="order-2 lg:order-1">
-          <div className="neu-raised relative overflow-hidden rounded-[40px] p-6 sm:p-10">
-            <div
-              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#3B82F6]/10 blur-3xl"
-              aria-hidden
-            />
-            <div className="animate-neu-float">
-              <SchedulerIllustration className="mx-auto w-full max-w-[320px] sm:max-w-[360px]" />
-            </div>
-            <p className="mx-auto mt-4 max-w-sm text-center text-sm leading-relaxed text-[var(--muted-foreground)]">
-              Coordinate halls, time slots, and campus events in one calm workspace built for
-              institutions.
-            </p>
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {highlights.map(({ icon: Icon, label }) => (
-                <li
-                  key={label}
-                  className="neu-inset flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[var(--foreground)]"
-                >
-                  <span className="neu-raised-sm flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#3B82F6]">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </span>
-                  {label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section className="order-1 lg:order-2">
-          <div className="neu-raised mx-auto w-full max-w-md rounded-[32px] p-8 sm:p-10">
-            <div className="space-y-1">
-              <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-3xl">
+      <main className="relative z-10 mx-auto flex w-full max-w-md min-h-0 flex-1 justify-center overflow-y-auto px-4 py-2 scrollbar-none sm:px-6">
+        <section className="flex w-full items-center py-2">
+          <div className="glass-strong mx-auto w-full max-w-md rounded-[28px] p-5 sm:rounded-[32px] sm:p-7">
+            <div className="space-y-0.5">
+              <h1 className="font-display text-xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-2xl">
                 Welcome back
               </h1>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Sign in with your username and password to open the dashboard.
+              <p className="text-xs text-[var(--muted-foreground)] sm:text-sm">
+                Sign in with your username and password.
               </p>
             </div>
 
             {formError ? (
               <div
                 role="alert"
-                className="mt-6 rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-800"
+                className="mt-4 rounded-2xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm font-medium text-red-800"
               >
                 {formError}
               </div>
             ) : null}
 
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            <form onSubmit={onSubmit} className="mt-5 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="userId" className="text-xs font-bold uppercase tracking-wider">
                   Username / ID
@@ -240,7 +193,7 @@ export default function LoginForm() {
               </Button>
             </form>
 
-            <details className="group mt-8 rounded-2xl border border-[var(--border)] bg-[#e4eaf2]/50 open:neu-inset">
+            <details className="group glass mt-5 rounded-2xl open:glass-inset">
               <summary
                 className={cn(
                   "cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--muted-foreground)] transition-colors",

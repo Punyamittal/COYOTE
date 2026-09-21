@@ -32,6 +32,13 @@
   --neu-raised-sm: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
   --neu-inset: inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light);
   --neu-pressed: inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light);
+
+  /* Glass (frosted panels — use with neu for depth) */
+  --glass-bg: rgba(255, 255, 255, 0.42);
+  --glass-bg-strong: rgba(255, 255, 255, 0.58);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 10px 40px rgba(30, 47, 77, 0.07);
 }
 
 @theme inline {
@@ -49,6 +56,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-jakarta), "Segoe UI", sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 45% at 8% 12%, rgba(147, 197, 253, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 92% 88%, rgba(251, 207, 232, 0.28), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 70% 20%, rgba(199, 210, 254, 0.2), transparent 45%),
+    var(--background);
 }
 
 h1,
@@ -86,6 +106,31 @@ h3,
   box-shadow: var(--neu-pressed) !important;
 }
 
+/* Glassmorphism — light frost over the neu base */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--neu-raised-sm);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--glass-highlight);
+  box-shadow: var(--glass-shadow), var(--neu-raised);
+}
+
+.glass-inset {
+  background: rgba(228, 234, 242, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--neu-inset);
+}
+
 @keyframes neu-float {
   0%,
   100% {
@@ -115,6 +160,18 @@ h3,
   animation-delay: 1.4s;
 }
 
+/* Hide scrollbars but keep scroll (wheel / touch) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Print */
 @media print {
   .print\:hidden {
@@ -139,26 +196,120 @@ h3,
   }
 }
 
-/* FullCalendar tweaks */
+/* FullCalendar — layout + glass toolbar */
+.schedule-calendar {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-calendar .fc {
+  flex: 1;
+  min-height: 0;
+}
+
 .fc {
-  --fc-border-color: rgba(186, 201, 220, 0.7);
-  --fc-button-bg-color: var(--primary);
-  --fc-button-border-color: var(--primary);
+  --fc-border-color: rgba(186, 201, 220, 0.55);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: rgba(255, 255, 255, 0.35);
+  --fc-list-event-hover-bg-color: rgba(219, 234, 254, 0.35);
+  --fc-button-bg-color: rgba(30, 47, 77, 0.92);
+  --fc-button-border-color: transparent;
   --fc-button-hover-bg-color: #16233b;
-  --fc-today-bg-color: rgba(219, 234, 254, 0.45);
+  --fc-button-active-bg-color: #0f1a2e;
+  --fc-button-text-color: #f8fafc;
+  --fc-today-bg-color: rgba(219, 234, 254, 0.4);
+  --fc-event-border-color: transparent;
+  --fc-now-indicator-color: #ff6b6b;
   font-family: inherit;
+}
+
+.fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem !important;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem !important;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.fc .fc-button {
+  border-radius: 12px !important;
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  box-shadow: var(--neu-raised-sm);
+  transition: filter 0.15s ease;
+}
+
+.fc .fc-button:hover {
+  filter: brightness(1.05);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background: var(--fc-button-active-bg-color) !important;
+}
+
+.fc .fc-scrollgrid {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  font-weight: 600;
+  color: var(--foreground);
+  padding: 0.35rem 0.5rem;
+}
+
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  min-width: 1.75rem;
+  text-align: center;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
 }
 
 .fc .fc-event {
   cursor: pointer;
   border: none;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   border-radius: 8px;
+  padding: 1px 4px;
+  margin-bottom: 1px;
 }
 
-.fc .fc-toolbar-chunk button {
-  box-shadow: var(--neu-raised-sm);
-  border: none !important;
+.fc .fc-daygrid-event {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fc .fc-more-link {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.fc .fc-list {
+  border-radius: 12px;
+}
+
+.fc .fc-list-event:hover td {
+  background: var(--fc-list-event-hover-bg-color);
 }
 
 .event-morning {

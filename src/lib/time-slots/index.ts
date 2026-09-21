@@ -11,4 +11,4 @@ export {
   slotIdsForEvent,
   getActiveSlots,
 } from "./classify";
-export { detectConflicts } from "./conflicts";
+export { detectConflicts, eventIdsWithConflicts } from "./conflicts";

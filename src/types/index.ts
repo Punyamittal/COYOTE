@@ -149,6 +149,8 @@ export interface EventFilters {
   pageSize?: number;
   sortBy?: string;
   sortDir?: "asc" | "desc";
+  /** When false, skips exact count query (faster for calendar range loads). */
+  countTotal?: boolean;
 }
 
 export interface PaginatedResult<T> {

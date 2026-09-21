@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@fullcalendar/react", "@fullcalendar/core"],
+  },
 };
 
 export default nextConfig;

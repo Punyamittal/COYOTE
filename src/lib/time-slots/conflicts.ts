@@ -89,3 +89,14 @@ export function detectConflicts(
 
   return { hasConflicts: unique.length > 0, conflicts: unique };
 }
+
+/** One pass over a loaded set — used by calendar rendering. */
+export function eventIdsWithConflicts(events: ScheduleEvent[]): Set<string> {
+  const ids = new Set<string>();
+  for (const event of events) {
+    if (detectConflicts(event, events).hasConflicts) {
+      ids.add(event.id);
+    }
+  }
+  return ids;
+}

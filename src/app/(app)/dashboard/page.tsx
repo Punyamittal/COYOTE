@@ -3,7 +3,6 @@ import { getDashboardStats, getUpcomingEvents } from "@/actions/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SchedulerIllustration } from "@/components/illustrations/scheduler-character";
 import { formatTime12h } from "@/lib/time-slots";
 import { AlertTriangle, Calendar, MapPin, Sunrise, Sunset, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,10 +14,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="neu-raised flex flex-wrap items-center gap-5 rounded-[28px] p-5 md:p-6">
-        <div className="hidden w-28 shrink-0 sm:block">
-          <SchedulerIllustration className="w-full" />
-        </div>
+      <div className="glass-strong flex flex-wrap items-center gap-5 rounded-[28px] p-5 md:p-6">
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--primary)] md:text-3xl">
             Today at a glance
@@ -134,7 +130,7 @@ function StatCard({
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-semibold text-[var(--muted-foreground)]">{title}</CardTitle>
         {icon && (
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl neu-inset">{icon}</span>
+          <span className="glass-inset flex h-8 w-8 items-center justify-center rounded-xl">{icon}</span>
         )}
       </CardHeader>
       <CardContent>

@@ -1,5 +1,5 @@
-import { ScheduleCalendar } from "@/components/calendar/schedule-calendar";
+import { CalendarClient } from "./calendar-client";
 
 export default function CalendarPage() {
-  return <ScheduleCalendar />;
+  return <CalendarClient />;
 }

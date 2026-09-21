@@ -35,7 +35,10 @@ export async function listEvents(
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase.from("events").select("*", { count: "exact" });
+    const withCount = filters.countTotal !== false;
+    let query = withCount
+      ? supabase.from("events").select("*", { count: "exact" })
+      : supabase.from("events").select("*");
 
     if (filters.date) query = query.eq("date", filters.date);
     if (filters.dateFrom) query = query.gte("date", filters.dateFrom);
@@ -90,7 +93,7 @@ export async function listEvents(
     if (error) throw error;
 
     const events = (data as EventRow[]).map(mapEvent);
-    const total = count ?? 0;
+    const total = withCount ? (count ?? 0) : events.length;
     return {
       success: true,
       data: {

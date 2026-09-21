@@ -66,14 +66,14 @@ export function AppShell({
   const items = nav.filter((n) => n.show(user));
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-[var(--background)]">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[var(--background)] transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex h-dvh w-64 flex-col bg-[var(--background)] transition-transform lg:static lg:h-full lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="m-3 flex flex-1 flex-col rounded-[28px] neu-raised p-3">
+        <div className="glass-strong m-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] p-3">
           <div className="mb-4 flex items-center justify-between px-2 pt-2">
             <Link href="/dashboard" className="text-lg font-extrabold tracking-tight">
               Schedule<span className="text-[#3B82F6]">Hub</span>
@@ -83,7 +83,7 @@ export function AppShell({
             </button>
           </div>
 
-          <nav className="flex flex-1 flex-col gap-1.5">
+          <nav className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto scrollbar-none">
             {items.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -95,8 +95,8 @@ export function AppShell({
                   className={cn(
                     "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all",
                     active
-                      ? "neu-inset text-[var(--primary)]"
-                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      ? "glass-inset text-[var(--primary)]"
+                      : "text-[var(--muted-foreground)] hover:bg-white/25 hover:text-[var(--foreground)]"
                   )}
                 >
                   <span
@@ -113,7 +113,7 @@ export function AppShell({
             })}
           </nav>
 
-          <div className="mt-3 rounded-2xl neu-inset p-3">
+          <div className="glass-inset mt-3 rounded-2xl p-3">
             <div className="mb-2 truncate text-xs font-semibold">
               {user.name}
               <div className="font-medium text-[var(--muted-foreground)]">
@@ -134,8 +134,8 @@ export function AppShell({
         <div className="fixed inset-0 z-30 bg-[#1e2f4d]/25 lg:hidden" onClick={() => setOpen(false)} />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 mx-3 mt-3 flex h-14 items-center gap-3 rounded-2xl neu-raised px-4 print:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="glass z-20 mx-3 mt-3 flex h-14 shrink-0 items-center gap-3 rounded-2xl px-4 print:hidden">
           <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
@@ -156,7 +156,7 @@ export function AppShell({
             </span>
           )}
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-none md:p-6">{children}</main>
       </div>
     </div>
   );

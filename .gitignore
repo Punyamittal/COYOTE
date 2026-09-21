@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Generated student login exports (contain plaintext passwords)
+*Login Credentials.xlsx
+
 # vercel
 .vercel
 

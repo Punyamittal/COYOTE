@@ -27,7 +27,7 @@ export function ChangePasswordGate() {
   }
 
   return (
-    <div className="mx-auto flex max-w-md items-center py-16">
+    <div className="mx-auto flex min-h-full max-w-md items-center py-6">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Change your password</CardTitle>

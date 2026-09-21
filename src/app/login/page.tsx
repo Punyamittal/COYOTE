@@ -5,7 +5,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--background)]">
+        <div className="flex h-dvh max-h-dvh flex-col items-center justify-center gap-3 bg-[var(--background)]">
           <div
             className="h-10 w-10 animate-pulse rounded-2xl neu-raised-sm"
             aria-hidden

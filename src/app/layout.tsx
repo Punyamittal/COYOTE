@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${jakarta.variable} h-full`}>
-      <body className="min-h-full antialiased font-sans">
+      <body className="h-dvh max-h-dvh overflow-hidden antialiased font-sans">
         {children}
         <Toaster richColors position="top-right" closeButton />
       </body>
