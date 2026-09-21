@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f6f8;
+  --foreground: #1a2332;
+  --card: #ffffff;
+  --card-foreground: #1a2332;
+  --primary: #1e3a5f;
+  --primary-foreground: #f8fafc;
+  --secondary: #e8eef4;
+  --secondary-foreground: #1e3a5f;
+  --muted: #eef2f6;
+  --muted-foreground: #64748b;
+  --accent: #c45c26;
+  --accent-foreground: #fff;
+  --destructive: #b91c1c;
+  --border: #d8e0e8;
+  --ring: #1e3a5f;
+  --sidebar: #14233a;
+  --sidebar-foreground: #e8eef4;
+  --morning: #dbeafe;
+  --evening: #fce7f3;
+  --fullday: #d1fae5;
+  --conflict: #fee2e2;
+  --multislot: #fef3c7;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-source-sans);
+  --font-display: var(--font-libre);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-source-sans), "Segoe UI", sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-libre), Georgia, serif;
+}
+
+/* Print */
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  .print-timetable {
+    overflow: visible !important;
+    border: none !important;
+  }
+  .print-timetable table {
+    font-size: 8px;
+  }
+}
+
+/* FullCalendar tweaks */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-button-bg-color: var(--primary);
+  --fc-button-border-color: var(--primary);
+  --fc-button-hover-bg-color: #162d4a;
+  --fc-today-bg-color: #f0f5fa;
+  font-family: inherit;
+}
+
+.fc .fc-event {
+  cursor: pointer;
+  border: none;
+  font-size: 0.75rem;
+}
+
+.event-morning { background: #1e5a8a !important; }
+.event-evening { background: #9d174d !important; }
+.event-fullday { background: #047857 !important; }
+.event-multislot { background: #b45309 !important; }
+.event-conflict { box-shadow: inset 0 0 0 2px #dc2626 !important; }
