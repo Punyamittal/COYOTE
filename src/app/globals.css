@@ -1,35 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f6f8;
-  --foreground: #1a2332;
-  --card: #ffffff;
-  --card-foreground: #1a2332;
-  --primary: #1e3a5f;
+  /* Soft clay neumorphic base (from Stitch) */
+  --background: #e8eef5;
+  --foreground: #24334a;
+  --card: #e8eef5;
+  --card-foreground: #24334a;
+  --primary: #1e2f4d;
   --primary-foreground: #f8fafc;
-  --secondary: #e8eef4;
-  --secondary-foreground: #1e3a5f;
-  --muted: #eef2f6;
+  --secondary: #dfe7f1;
+  --secondary-foreground: #1e2f4d;
+  --muted: #dde5ef;
   --muted-foreground: #64748b;
-  --accent: #c45c26;
+  --accent: #ff6b6b;
   --accent-foreground: #fff;
-  --destructive: #b91c1c;
-  --border: #d8e0e8;
-  --ring: #1e3a5f;
-  --sidebar: #14233a;
-  --sidebar-foreground: #e8eef4;
+  --destructive: #dc2626;
+  --border: rgba(186, 201, 220, 0.55);
+  --ring: #ff6b6b;
+  --sidebar: #e8eef5;
+  --sidebar-foreground: #24334a;
   --morning: #dbeafe;
   --evening: #fce7f3;
   --fullday: #d1fae5;
   --conflict: #fee2e2;
   --multislot: #fef3c7;
+
+  /* Neumorphic shadows */
+  --neu-light: #ffffff;
+  --neu-dark: #c4d0df;
+  --neu-raised: 10px 10px 22px var(--neu-dark), -10px -10px 22px var(--neu-light);
+  --neu-raised-sm: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
+  --neu-inset: inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light);
+  --neu-pressed: inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-source-sans);
-  --font-display: var(--font-libre);
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-jakarta);
 }
 
 * {
@@ -39,11 +48,71 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-source-sans), "Segoe UI", sans-serif;
+  font-family: var(--font-jakarta), "Segoe UI", sans-serif;
 }
 
-h1, h2, h3, .font-display {
-  font-family: var(--font-libre), Georgia, serif;
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-jakarta), "Segoe UI", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Neumorphic utilities */
+.neu-flat {
+  background: var(--background);
+}
+
+.neu-raised {
+  background: var(--background);
+  box-shadow: var(--neu-raised);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.neu-raised-sm {
+  background: var(--background);
+  box-shadow: var(--neu-raised-sm);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.neu-inset {
+  background: #e4eaf2;
+  box-shadow: var(--neu-inset);
+  border: 1px solid rgba(215, 226, 238, 0.35);
+}
+
+.neu-pressed {
+  box-shadow: var(--neu-pressed) !important;
+}
+
+@keyframes neu-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-neu-float {
+  animation: neu-float 5s ease-in-out infinite;
+}
+
+@keyframes neu-float-delayed {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-neu-float-delayed {
+  animation: neu-float-delayed 5.5s ease-in-out infinite;
+  animation-delay: 1.4s;
 }
 
 /* Print */
@@ -63,6 +132,7 @@ h1, h2, h3, .font-display {
   .print-timetable {
     overflow: visible !important;
     border: none !important;
+    box-shadow: none !important;
   }
   .print-timetable table {
     font-size: 8px;
@@ -71,11 +141,11 @@ h1, h2, h3, .font-display {
 
 /* FullCalendar tweaks */
 .fc {
-  --fc-border-color: var(--border);
+  --fc-border-color: rgba(186, 201, 220, 0.7);
   --fc-button-bg-color: var(--primary);
   --fc-button-border-color: var(--primary);
-  --fc-button-hover-bg-color: #162d4a;
-  --fc-today-bg-color: #f0f5fa;
+  --fc-button-hover-bg-color: #16233b;
+  --fc-today-bg-color: rgba(219, 234, 254, 0.45);
   font-family: inherit;
 }
 
@@ -83,10 +153,26 @@ h1, h2, h3, .font-display {
   cursor: pointer;
   border: none;
   font-size: 0.75rem;
+  border-radius: 8px;
 }
 
-.event-morning { background: #1e5a8a !important; }
-.event-evening { background: #9d174d !important; }
-.event-fullday { background: #047857 !important; }
-.event-multislot { background: #b45309 !important; }
-.event-conflict { box-shadow: inset 0 0 0 2px #dc2626 !important; }
+.fc .fc-toolbar-chunk button {
+  box-shadow: var(--neu-raised-sm);
+  border: none !important;
+}
+
+.event-morning {
+  background: #1e5a8a !important;
+}
+.event-evening {
+  background: #9d174d !important;
+}
+.event-fullday {
+  background: #047857 !important;
+}
+.event-multislot {
+  background: #b45309 !important;
+}
+.event-conflict {
+  box-shadow: inset 0 0 0 2px #dc2626 !important;
+}

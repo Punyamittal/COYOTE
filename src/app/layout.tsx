@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Libre_Franklin, Source_Sans_3 } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
-});
-
-const libre = Libre_Franklin({
-  variable: "--font-libre",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -21,8 +16,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sourceSans.variable} ${libre.variable} h-full`}>
-      <body className="min-h-full antialiased">
+    <html lang="en" className={`${jakarta.variable} h-full`}>
+      <body className="min-h-full antialiased font-sans">
         {children}
         <Toaster richColors position="top-right" closeButton />
       </body>

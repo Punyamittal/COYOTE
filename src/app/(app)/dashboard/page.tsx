@@ -3,8 +3,10 @@ import { getDashboardStats, getUpcomingEvents } from "@/actions/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SchedulerIllustration } from "@/components/illustrations/scheduler-character";
 import { formatTime12h } from "@/lib/time-slots";
 import { AlertTriangle, Calendar, MapPin, Sunrise, Sunset, Sun } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const [statsRes, upcomingRes] = await Promise.all([getDashboardStats(), getUpcomingEvents()]);
@@ -13,14 +15,19 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-[var(--primary)]">Dashboard</h1>
-          <p className="text-sm text-[var(--muted-foreground)]">
-            Today&apos;s schedule overview and upcoming activity
+      <div className="neu-raised flex flex-wrap items-center gap-5 rounded-[28px] p-5 md:p-6">
+        <div className="hidden w-28 shrink-0 sm:block">
+          <SchedulerIllustration className="w-full" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--primary)] md:text-3xl">
+            Today at a glance
+          </h1>
+          <p className="mt-1 text-sm font-medium text-[var(--muted-foreground)]">
+            Your campus schedule, morning through evening — pressable, clear, and human.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild variant="accent">
           <Link href="/events/new">Add Event</Link>
         </Button>
       </div>
@@ -57,31 +64,34 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Upcoming Events</CardTitle>
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="secondary" size="sm">
             <Link href="/calendar">Open Calendar</Link>
           </Button>
         </CardHeader>
         <CardContent>
           {upcoming.length === 0 ? (
-            <div className="rounded-md border border-dashed border-[var(--border)] py-10 text-center">
+            <div className="rounded-2xl neu-inset py-10 text-center">
               <p className="text-sm text-[var(--muted-foreground)]">No upcoming events scheduled.</p>
-              <Button asChild className="mt-3" size="sm">
+              <Button asChild className="mt-3" size="sm" variant="accent">
                 <Link href="/events/new">Add Event</Link>
               </Button>
             </div>
           ) : (
-            <ul className="divide-y divide-[var(--border)]">
+            <ul className="space-y-2">
               {upcoming.map((e) => (
-                <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <li
+                  key={e.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl neu-inset px-4 py-3"
+                >
                   <div>
-                    <Link href={`/events/${e.id}`} className="font-medium hover:underline">
+                    <Link href={`/events/${e.id}`} className="font-semibold hover:underline">
                       {e.eventName}
                     </Link>
                     <p className="text-sm text-[var(--muted-foreground)]">
                       {e.name} · {e.registrationNumber} · {e.location}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-sm font-medium">
                     <Badge variant="outline">{e.date}</Badge>
                     <span>
                       {formatTime12h(e.startTime)} – {formatTime12h(e.endTime)}
@@ -108,25 +118,27 @@ function StatCard({
   icon?: React.ReactNode;
   tone?: "morning" | "evening" | "fullday" | "conflict";
 }) {
-  const bg =
+  const tint =
     tone === "morning"
-      ? "bg-[var(--morning)]"
+      ? "bg-[var(--morning)]/50"
       : tone === "evening"
-        ? "bg-[var(--evening)]"
+        ? "bg-[var(--evening)]/50"
         : tone === "fullday"
-          ? "bg-[var(--fullday)]"
+          ? "bg-[var(--fullday)]/50"
           : tone === "conflict"
-            ? "bg-[var(--conflict)]"
-            : "bg-[var(--card)]";
+            ? "bg-[var(--conflict)]/70"
+            : "";
 
   return (
-    <Card className={bg}>
+    <Card className={cn(tint)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">{title}</CardTitle>
-        {icon}
+        <CardTitle className="text-sm font-semibold text-[var(--muted-foreground)]">{title}</CardTitle>
+        {icon && (
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl neu-inset">{icon}</span>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="font-display text-3xl font-semibold">{value}</div>
+        <div className="font-display text-3xl font-extrabold tracking-tight">{value}</div>
       </CardContent>
     </Card>
   );

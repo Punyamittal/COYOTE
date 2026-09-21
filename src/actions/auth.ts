@@ -70,7 +70,13 @@ export async function loginAction(raw: unknown): Promise<AuthResult> {
     return { success: true };
   } catch (err) {
     console.error(err);
-    return { success: false, error: "Unable to sign in. Check server configuration." };
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return {
+      success: false,
+      error: message.includes("Supabase")
+        ? message
+        : `Unable to sign in: ${message}`,
+    };
   }
 }
 
@@ -141,7 +147,10 @@ export async function setupInitialAdmin(): Promise<AuthResult & { userId?: strin
       .eq("role", "MAIN_ADMIN");
 
     if ((count ?? 0) > 0) {
-      return { success: false, error: "Main Admin already exists." };
+      return {
+        success: false,
+        error: `Main Admin already exists. Sign in with username "${adminUser}" and your INITIAL_ADMIN_PASSWORD.`,
+      };
     }
 
     const { data, error } = await admin.auth.admin.createUser({
@@ -158,10 +167,15 @@ export async function setupInitialAdmin(): Promise<AuthResult & { userId?: strin
 
     if (error || !data.user) {
       console.error(error);
-      return { success: false, error: "Failed to create Main Admin." };
+      return {
+        success: false,
+        error: error?.message
+          ? `Failed to create Main Admin: ${error.message}`
+          : "Failed to create Main Admin.",
+      };
     }
 
-    await admin.from("profiles").upsert({
+    const { error: profileError } = await admin.from("profiles").upsert({
       id: data.user.id,
       name: "Main Admin",
       user_id: adminUser,
@@ -171,9 +185,21 @@ export async function setupInitialAdmin(): Promise<AuthResult & { userId?: strin
       force_password_change: true,
     });
 
+    if (profileError) {
+      console.error(profileError);
+      return {
+        success: false,
+        error: `User created but profile failed: ${profileError.message}`,
+      };
+    }
+
     return { success: true, userId: adminUser };
   } catch (err) {
     console.error(err);
-    return { success: false, error: "Setup failed. Check Supabase credentials." };
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return {
+      success: false,
+      error: `Setup failed: ${message}`,
+    };
   }
 }

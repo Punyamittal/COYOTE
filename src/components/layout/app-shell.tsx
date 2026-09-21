@@ -63,82 +63,87 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
   const items = nav.filter((n) => n.show(user));
 
   return (
     <div className="flex min-h-screen bg-[var(--background)]">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r border-[var(--border)] bg-[var(--sidebar)] text-[var(--sidebar-foreground)] transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[var(--background)] transition-transform lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
-          <Link href="/dashboard" className="font-semibold tracking-tight">
-            Schedule<span className="text-[var(--accent)]">Hub</span>
-          </Link>
-          <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <nav className="flex flex-col gap-1 p-3">
-          {items.map((item) => {
-            const Icon = item.icon;
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-white/10 font-medium text-white"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-3">
-          <div className="mb-2 truncate px-2 text-xs text-white/60">
-            {user.name}
-            <div className="text-white/40">{user.role.replace("_", " ")}</div>
+        <div className="m-3 flex flex-1 flex-col rounded-[28px] neu-raised p-3">
+          <div className="mb-4 flex items-center justify-between px-2 pt-2">
+            <Link href="/dashboard" className="text-lg font-extrabold tracking-tight">
+              Schedule<span className="text-[#3B82F6]">Hub</span>
+            </Link>
+            <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <form action={logoutAction}>
-            <Button
-              type="submit"
-              variant="ghost"
-              className="w-full justify-start text-white/70 hover:bg-white/5 hover:text-white"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </form>
+
+          <nav className="flex flex-1 flex-col gap-1.5">
+            {items.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all",
+                    active
+                      ? "neu-inset text-[var(--primary)]"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-xl",
+                      active ? "bg-white/50" : "neu-raised-sm"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="mt-3 rounded-2xl neu-inset p-3">
+            <div className="mb-2 truncate text-xs font-semibold">
+              {user.name}
+              <div className="font-medium text-[var(--muted-foreground)]">
+                {user.role.replace("_", " ")}
+              </div>
+            </div>
+            <form action={logoutAction}>
+              <Button type="submit" variant="secondary" size="sm" className="w-full justify-start">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </form>
+          </div>
         </div>
       </aside>
 
       {open && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
+        <div className="fixed inset-0 z-30 bg-[#1e2f4d]/25 lg:hidden" onClick={() => setOpen(false)} />
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-[var(--border)] bg-[var(--card)]/90 px-4 backdrop-blur print:hidden">
+        <header className="sticky top-0 z-20 mx-3 mt-3 flex h-14 items-center gap-3 rounded-2xl neu-raised px-4 print:hidden">
           <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex-1 text-sm text-[var(--muted-foreground)]">
+          <div className="flex-1 text-sm font-medium text-[var(--muted-foreground)]">
             Event & Activity Scheduling
           </div>
           {can(user, "events:create") && (
-            <Button asChild size="sm">
+            <Button asChild size="sm" variant="accent">
               <Link href="/events/new">
                 <Plus className="h-4 w-4" />
                 Add Event
@@ -146,7 +151,7 @@ export function AppShell({
             </Button>
           )}
           {isMainAdmin(user) && (
-            <span className="hidden rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900 sm:inline">
+            <span className="hidden rounded-full neu-inset px-3 py-1 text-xs font-bold text-[var(--primary)] sm:inline">
               Main Admin
             </span>
           )}
