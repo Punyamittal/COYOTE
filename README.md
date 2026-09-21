@@ -58,3 +58,4 @@ Central config: `src/lib/time-slots/`. Events are auto-classified into morning/e
 - Never commit real passwords or `.env.local`.
 - All mutations authorize on the server via session role checks.
 # COYOTE
+# COYOTE
