@@ -7,16 +7,11 @@ import { loginSchema, changePasswordSchema } from "@/lib/validation";
 import { writeAuditLog } from "@/lib/audit";
 import { getSessionUser, requireUser } from "@/lib/auth/session";
 import { can } from "@/lib/permissions";
+import type { ViewerAccess } from "@/lib/access";
 
 export type AuthResult = { success: true } | { success: false; error: string };
 
-export type ViewerAccess = {
-  canCreateEvents: boolean;
-  canEditEvents: boolean;
-  canDeleteEvents: boolean;
-  canImportEvents: boolean;
-  canManageUsers: boolean;
-};
+export type { ViewerAccess } from "@/lib/access";
 
 export async function getViewerAccess(): Promise<ViewerAccess> {
   const user = await getSessionUser();

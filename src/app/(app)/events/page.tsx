@@ -11,8 +11,8 @@ import {
 import type { RowSelectionState } from "@tanstack/table-core";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { getViewerAccess, type ViewerAccess } from "@/actions/auth";
 import { bulkDeleteEvents, listEvents } from "@/actions/events";
+import { useViewerAccess } from "@/components/auth/viewer-access";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
 import { useFilterStore } from "@/lib/stores/filters";
@@ -45,11 +45,7 @@ export default function EventsPage() {
   const [search, setSearch] = useState(filters.search ?? "");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pending, startTransition] = useTransition();
-  const [access, setAccess] = useState<ViewerAccess | null>(null);
-
-  useEffect(() => {
-    void getViewerAccess().then(setAccess);
-  }, []);
+  const access = useViewerAccess();
 
   useEffect(() => {
     let cancelled = false;

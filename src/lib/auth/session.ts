@@ -1,11 +1,14 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { SessionUser } from "@/types";
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+/** Read the session from the cookie. Avoids a network round trip to Auth on every page. */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return null;
 
   const { data: profile } = await supabase
@@ -25,7 +28,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     status: profile.status,
     forcePasswordChange: profile.force_password_change,
   };
-}
+});
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();

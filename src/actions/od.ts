@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
 import { isAdminOrAbove, isMainAdmin } from "@/lib/permissions";
 import { formatTime12h, normalizeTime } from "@/lib/time-slots";
-import ExcelJS from "exceljs";
 
 export type OdSlot = {
   id?: string;
@@ -660,6 +659,7 @@ export async function exportAllOdExcel(): Promise<
       return { success: false, error: eventsResult.error.message };
     }
 
+    const { default: ExcelJS } = await import("exceljs");
     const workbook = new ExcelJS.Workbook();
     const applications = workbook.addWorksheet("OD applications");
     applications.addRow([

@@ -8,7 +8,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateSelectArg, EventClickArg, DatesSetArg, EventInput } from "@fullcalendar/core";
-import { getViewerAccess } from "@/actions/auth";
 import { listEvents } from "@/actions/events";
 import { listMyOd } from "@/actions/od";
 import type { OdRequest } from "@/actions/od";
@@ -20,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DayCategory, ScheduleEvent } from "@/types";
+import { useViewerAccess } from "@/components/auth/viewer-access";
 import { toast } from "sonner";
 
 const calendarPlugins = [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin];
@@ -90,39 +90,36 @@ export function ScheduleCalendar() {
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [canCreate, setCanCreate] = useState(false);
+  const { canCreateEvents: canCreate } = useViewerAccess();
   const [odOpen, setOdOpen] = useState(false);
   const [odDate, setOdDate] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    void getViewerAccess().then((access) => setCanCreate(access.canCreateEvents));
-  }, []);
 
   useEffect(() => {
     if (!range) return;
     let cancelled = false;
     async function run(from: string, to: string) {
       setLoading(true);
-      const result = await listEvents({
-        dateFrom: from,
-        dateTo: to,
-        page: 1,
-        pageSize: 200,
-        sortBy: "date",
-        sortDir: "asc",
-        countTotal: false,
-      });
+      const [result, od] = await Promise.all([
+        listEvents({
+          dateFrom: from,
+          dateTo: to,
+          page: 1,
+          pageSize: 200,
+          sortBy: "date",
+          sortDir: "asc",
+          countTotal: false,
+        }),
+        listMyOd(from, to),
+      ]);
       if (cancelled) return;
       setLoading(false);
       if (!result.success) {
         toast.error(result.error);
         setEvents([]);
-        return;
+      } else {
+        setEvents(result.data.data);
       }
-      setEvents(result.data.data);
-      const od = await listMyOd(from, to);
-      if (cancelled) return;
       if (od.success) setOdRequests(od.data);
       else if (!od.error.includes("od_requests")) toast.error(od.error);
     }

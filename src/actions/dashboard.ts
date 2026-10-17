@@ -15,17 +15,15 @@ export async function getDashboardStats(): Promise<
     const supabase = await createClient();
     const today = todayIST();
 
-    const { count: totalEvents } = await supabase
-      .from("events")
-      .select("*", { count: "exact", head: true });
+    const [totalRes, todayRes, upcomingRes] = await Promise.all([
+      supabase.from("events").select("*", { count: "exact", head: true }),
+      supabase.from("events").select("*").eq("date", today),
+      supabase.from("events").select("*", { count: "exact", head: true }).gt("date", today),
+    ]);
 
-    const { data: todayRows } = await supabase.from("events").select("*").eq("date", today);
-    const todayEvents = (todayRows as EventRow[] | null)?.map(mapEvent) ?? [];
-
-    const { count: upcoming } = await supabase
-      .from("events")
-      .select("*", { count: "exact", head: true })
-      .gt("date", today);
+    const totalEvents = totalRes.count;
+    const todayEvents = (todayRes.data as EventRow[] | null)?.map(mapEvent) ?? [];
+    const upcoming = upcomingRes.count;
 
     const locations = new Set(todayEvents.map((e) => e.location.toLowerCase()));
 

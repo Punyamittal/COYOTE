@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Copy, Pencil, Trash2 } from "lucide-react";
-import { getViewerAccess, type ViewerAccess } from "@/actions/auth";
 import { deleteEvent } from "@/actions/events";
+import { useViewerAccess } from "@/components/auth/viewer-access";
 import { listEventOd, removeMyOd, saveEventOd, type OdRequest, type OdSlot } from "@/actions/od";
 import { OdStatusBadge, odSetupHint } from "@/components/calendar/od-status-badge";
 import { OdTimeFields } from "@/components/calendar/od-time-fields";
@@ -62,11 +62,7 @@ export function EventDetailContent({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [access, setAccess] = useState<ViewerAccess | null>(null);
-
-  useEffect(() => {
-    void getViewerAccess().then(setAccess);
-  }, []);
+  const access = useViewerAccess();
 
   function handleDelete() {
     startTransition(async () => {
