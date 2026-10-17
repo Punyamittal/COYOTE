@@ -228,7 +228,7 @@ export default function EventsPage() {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
               <Input
-                className="w-56 pl-8"
+                className="w-full pl-8 sm:w-56"
                 placeholder="Search…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

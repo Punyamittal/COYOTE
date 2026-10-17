@@ -215,7 +215,7 @@ export function UsersTable({
           placeholder="Search users…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
+          className="w-full sm:max-w-xs"
         />
         <Button
           onClick={() => {

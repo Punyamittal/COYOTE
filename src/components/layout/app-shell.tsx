@@ -137,18 +137,25 @@ export function AppShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="glass z-20 mx-3 mt-3 flex h-14 shrink-0 items-center gap-3 rounded-2xl px-4 print:hidden">
-          <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
+        <header className="glass z-20 mx-2 mt-2 flex h-14 shrink-0 items-center gap-2 rounded-2xl px-2 sm:mx-3 sm:mt-3 sm:gap-3 sm:px-4 print:hidden">
+          <button
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl lg:hidden"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+          >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex-1 text-sm font-medium text-[var(--muted-foreground)]">
-            {APP_TAGLINE}
+          <div className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--muted-foreground)]">
+            <span className="sm:hidden">
+              <BrandMark className="text-base" />
+            </span>
+            <span className="hidden sm:inline">{APP_TAGLINE}</span>
           </div>
           {can(user, "events:create") && (
-            <Button asChild size="sm" variant="accent">
+            <Button asChild size="sm" variant="accent" className="shrink-0 px-3">
               <Link href="/events/new">
                 <Plus className="h-4 w-4" />
-                Add Event
+                <span className="hidden sm:inline">Add Event</span>
               </Link>
             </Button>
           )}
@@ -158,7 +165,9 @@ export function AppShell({
             </span>
           )}
         </header>
-        <main className="min-h-0 flex-1 overflow-y-auto p-4 scrollbar-none md:p-6">{children}</main>
+        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 scrollbar-none sm:p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

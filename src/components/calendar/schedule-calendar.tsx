@@ -163,6 +163,13 @@ export function ScheduleCalendar() {
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }}
+              buttonText={{
+                today: "Today",
+                month: "Month",
+                week: "Week",
+                day: "Day",
+                list: "List",
+              }}
               height="100%"
               expandRows
               stickyHeaderDates

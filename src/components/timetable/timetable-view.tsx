@@ -170,8 +170,8 @@ export function TimetableView() {
       </div>
 
       <Card className="print:hidden">
-        <CardContent className="flex flex-wrap items-end gap-3 pt-5">
-          <div className="min-w-[180px] flex-1 space-y-1.5">
+        <CardContent className="grid grid-cols-1 items-end gap-3 pt-5 sm:grid-cols-2 lg:flex lg:flex-wrap">
+          <div className="min-w-0 space-y-1.5 sm:col-span-2 lg:min-w-[180px] lg:flex-1">
             <Label htmlFor="tt-search">Search</Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--muted-foreground)]" />
@@ -203,7 +203,7 @@ export function TimetableView() {
               onChange={(e) => setFilters({ dateTo: e.target.value || undefined, page: 1 })}
             />
           </div>
-          <div className="space-y-1.5 min-w-[160px]">
+          <div className="min-w-0 space-y-1.5 sm:col-span-2 lg:min-w-[160px]">
             <Label>Category</Label>
             <Select
               value={filters.dayCategory ?? "all"}

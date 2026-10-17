@@ -229,6 +229,36 @@ h3,
   margin-bottom: 0.75rem !important;
 }
 
+@media (max-width: 640px) {
+  .fc .fc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+    text-align: center;
+  }
+
+  .fc .fc-button {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.55rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .fc .fc-daygrid-day-number {
+    padding: 0.2rem 0.35rem;
+    font-size: 0.75rem;
+  }
+}
+
 .fc .fc-toolbar-title {
   font-size: 1.125rem !important;
   font-weight: 800;

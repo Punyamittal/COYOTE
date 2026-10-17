@@ -138,7 +138,7 @@ export function ReportsPanel() {
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
+        <CardContent className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap">
           {tab === "daily" ? (
             <div className="space-y-1">
               <Label>Date</Label>
