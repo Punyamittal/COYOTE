@@ -15,7 +15,7 @@ import { bulkDeleteEvents, listEvents } from "@/actions/events";
 import { useViewerAccess } from "@/components/auth/viewer-access";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
-import { useFilterStore } from "@/lib/stores/filters";
+import { useHydratedFilters } from "@/lib/stores/filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ScheduleEvent } from "@/types";
 
 export default function EventsPage() {
-  const { filters, setFilters } = useFilterStore();
+  const { filters, setFilters, hydrated } = useHydratedFilters();
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -48,10 +48,9 @@ export default function EventsPage() {
   const access = useViewerAccess();
 
   useEffect(() => {
+    if (!hydrated) return;
     let cancelled = false;
     async function run() {
-      await Promise.resolve();
-      if (cancelled) return;
       setLoading(true);
       const result = await listEvents({
         ...filters,
@@ -75,7 +74,7 @@ export default function EventsPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters]);
+  }, [filters, hydrated]);
 
   const load = useCallback(async () => {
     setLoading(true);

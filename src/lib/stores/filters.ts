@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { EventFilters } from "@/types";
@@ -28,3 +29,21 @@ export const useFilterStore = create<FilterState>()(
     { name: "schedule-filters" }
   )
 );
+
+/** Wait until saved filters are restored so the first query is the real one. */
+export function useHydratedFilters() {
+  const filters = useFilterStore((s) => s.filters);
+  const setFilters = useFilterStore((s) => s.setFilters);
+  const resetFilters = useFilterStore((s) => s.resetFilters);
+  const [hydrated, setHydrated] = useState(() => useFilterStore.persist.hasHydrated());
+
+  useEffect(() => {
+    if (useFilterStore.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    return useFilterStore.persist.onFinishHydration(() => setHydrated(true));
+  }, []);
+
+  return { filters, setFilters, resetFilters, hydrated };
+}

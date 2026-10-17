@@ -1,7 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { getMyOdSummary, type MyOdSummary, type OdCount } from "@/actions/od";
+import type { MyOdSummary, OdCount } from "@/actions/od";
 import { OdStatusBadge, odSetupHint } from "@/components/calendar/od-status-badge";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
@@ -21,25 +18,13 @@ function CountCard({ label, count }: { label: string; count: OdCount }) {
   );
 }
 
-export function MyOdPanel() {
-  const [summary, setSummary] = useState<MyOdSummary | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void getMyOdSummary().then((result) => {
-      if (cancelled) return;
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
-      setSummary(result.data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export function MyOdPanel({
+  summary,
+  error,
+}: {
+  summary: MyOdSummary | null;
+  error: string | null;
+}) {
   if (error) return <p className="text-sm text-red-700">{odSetupHint(error)}</p>;
   if (!summary) return <p className="text-sm text-[var(--muted-foreground)]">Loading your OD…</p>;
 

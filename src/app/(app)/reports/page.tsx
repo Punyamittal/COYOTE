@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { loadOdReview } from "@/actions/od";
 import { getSessionUser } from "@/lib/auth/session";
 import { can, isAdminOrAbove, isMainAdmin } from "@/lib/permissions";
 import { OdExportButton } from "@/components/reports/od-export-button";
@@ -9,6 +10,7 @@ export default async function ReportsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   if (!can(user, "reports:read")) redirect("/dashboard");
+  const review = isMainAdmin(user) ? await loadOdReview() : null;
 
   return (
     <div className="space-y-6">
@@ -22,7 +24,13 @@ export default async function ReportsPage() {
         </div>
         {isAdminOrAbove(user) ? <OdExportButton /> : null}
       </div>
-      {isMainAdmin(user) ? <OdReviewPanel /> : null}
+      {review ? (
+        <OdReviewPanel
+          requests={review.success ? review.data.requests : []}
+          events={review.success ? review.data.events : []}
+          loadError={review.success ? null : review.error}
+        />
+      ) : null}
       <ReportsPanel />
     </div>
   );

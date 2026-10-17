@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
-  listCalendarEventsForReview,
-  listOdForReview,
   reviewCalendarEvent,
   reviewOdSlot,
   type CalendarEventReview,
@@ -19,38 +17,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Filter = "all" | OdStatus;
 
-export function OdReviewPanel() {
-  const [rows, setRows] = useState<OdRequest[]>([]);
-  const [events, setEvents] = useState<CalendarEventReview[]>([]);
+export function OdReviewPanel({
+  requests,
+  events: initialEvents,
+  loadError,
+}: {
+  requests: OdRequest[];
+  events: CalendarEventReview[];
+  loadError: string | null;
+}) {
+  const [rows, setRows] = useState(requests);
+  const [events, setEvents] = useState(initialEvents);
   const [filter, setFilter] = useState<Filter>("pending");
-  const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void Promise.all([listOdForReview(), listCalendarEventsForReview()]).then(([od, calendar]) => {
-      if (cancelled) return;
-      if (!od.success) {
-        setError(od.error);
-        setRows([]);
-      } else {
-        setRows(od.data);
-      }
-      if (!calendar.success) {
-        setError(calendar.error);
-        setEvents([]);
-      } else {
-        setEvents(calendar.data);
-      }
-      if (od.success && calendar.success) setError(null);
-      setLoaded(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   function decide(slotId: string, status: "approved" | "rejected") {
     setBusyId(slotId);
@@ -118,11 +98,8 @@ export function OdReviewPanel() {
             </Button>
           ))}
         </div>
-        {error ? <p className="text-sm text-red-700">{odSetupHint(error)}</p> : null}
-        {!loaded ? (
-          <p className="text-sm text-[var(--muted-foreground)]">Loading OD requests…</p>
-        ) : null}
-        {loaded && !error && visibleEvents.length === 0 && visible.length === 0 ? (
+        {loadError ? <p className="text-sm text-red-700">{odSetupHint(loadError)}</p> : null}
+        {!loadError && visibleEvents.length === 0 && visible.length === 0 ? (
           <p className="text-sm text-[var(--muted-foreground)]">Nothing in this list.</p>
         ) : null}
         {visibleEvents.length > 0 ? (

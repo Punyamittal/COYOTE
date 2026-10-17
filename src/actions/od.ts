@@ -399,6 +399,15 @@ export async function saveFreeOd(input: {
   }
 }
 
+export async function loadOdReview(): Promise<
+  Result<{ requests: OdRequest[]; events: CalendarEventReview[] }>
+> {
+  const [requests, events] = await Promise.all([listOdForReview(), listCalendarEventsForReview()]);
+  if (!requests.success) return { success: false, error: requests.error };
+  if (!events.success) return { success: false, error: events.error };
+  return { success: true, data: { requests: requests.data, events: events.data } };
+}
+
 export async function listOdForReview(): Promise<Result<OdRequest[]>> {
   try {
     const me = await requireUser();
@@ -604,12 +613,12 @@ export async function getMyOdSummary(): Promise<Result<MyOdSummary>> {
   try {
     const me = await requireUser();
     const supabase = await createClient();
-    const { data, error } = await selectOd(supabase, (query) =>
-      query.eq("profile_id", me.id).order("date", { ascending: false })
-    );
-    if (error) return { success: false, error: error.message };
-    const requests = ((data ?? []) as OdRow[]).map((row) => mapRow(row, true));
-    const owned = await loadOwnedCalendarEvents(supabase, me.id);
+    const [selected, owned] = await Promise.all([
+      selectOd(supabase, (query) => query.eq("profile_id", me.id).order("date", { ascending: false })),
+      loadOwnedCalendarEvents(supabase, me.id),
+    ]);
+    if (selected.error) return { success: false, error: selected.error.message };
+    const requests = ((selected.data ?? []) as OdRow[]).map((row) => mapRow(row, true));
     if (owned.error) return { success: false, error: owned.error };
 
     const applicationStatuses = requests.flatMap((row) =>

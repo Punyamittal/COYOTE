@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Printer, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { listEvents } from "@/actions/events";
-import { useFilterStore } from "@/lib/stores/filters";
+import { useHydratedFilters } from "@/lib/stores/filters";
 import { ExcelExportButton } from "@/components/excel/export-menu";
 import { ExcelImportDialog } from "@/components/excel/import-dialog";
 import {
@@ -74,7 +74,7 @@ const SLOT_HEADERS = DEFAULT_TIME_SLOTS.map((s) => ({
 }));
 
 export function TimetableView() {
-  const { filters, setFilters, resetFilters } = useFilterStore();
+  const { filters, setFilters, resetFilters, hydrated } = useHydratedFilters();
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLocal, setSearchLocal] = useState(filters.search ?? "");
@@ -85,10 +85,9 @@ export function TimetableView() {
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
+    if (!hydrated) return;
     let cancelled = false;
     async function run() {
-      await Promise.resolve();
-      if (cancelled) return;
       setLoading(true);
       const result = await listEvents({
         ...filters,
@@ -96,6 +95,7 @@ export function TimetableView() {
         pageSize: 200,
         sortBy: "date",
         sortDir: "asc",
+        countTotal: false,
       });
       if (cancelled) return;
       setLoading(false);
@@ -110,7 +110,7 @@ export function TimetableView() {
     return () => {
       cancelled = true;
     };
-  }, [filters, reloadKey]);
+  }, [filters, hydrated, reloadKey]);
 
   const conflictIds = useMemo(() => {
     const ids = new Set<string>();

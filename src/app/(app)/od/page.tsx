@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
+import { getMyOdSummary } from "@/actions/od";
 import { getSessionUser } from "@/lib/auth/session";
 import { MyOdPanel } from "@/components/od/my-od-panel";
 
 export default async function MyOdPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const result = await getMyOdSummary();
 
   return (
     <div className="space-y-6">
@@ -15,7 +17,10 @@ export default async function MyOdPage() {
           rejected.
         </p>
       </div>
-      <MyOdPanel />
+      <MyOdPanel
+        summary={result.success ? result.data : null}
+        error={result.success ? null : result.error}
+      />
     </div>
   );
 }

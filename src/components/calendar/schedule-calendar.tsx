@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -8,8 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateSelectArg, EventClickArg, DatesSetArg, EventInput } from "@fullcalendar/core";
-import { listEvents } from "@/actions/events";
-import { listMyOd } from "@/actions/od";
+import { loadCalendarWindow, type CalendarWindow } from "@/actions/calendar";
 import type { OdRequest } from "@/actions/od";
 import { eventIdsWithConflicts } from "@/lib/time-slots";
 import { OdApplyDialog } from "@/components/calendar/od-apply-dialog";
@@ -17,7 +16,6 @@ import { odStatusTitle } from "@/components/calendar/od-status-badge";
 import { EventDetailDialog } from "@/components/events/event-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { DayCategory, ScheduleEvent } from "@/types";
 import { useViewerAccess } from "@/components/auth/viewer-access";
 import { toast } from "sonner";
@@ -82,12 +80,19 @@ function formatYmd(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function ScheduleCalendar() {
+export function ScheduleCalendar({
+  seedRange,
+  seedPromise,
+}: {
+  seedRange: { from: string; to: string };
+  seedPromise: Promise<CalendarWindow> | null;
+}) {
   const router = useRouter();
+  const seedUsed = useRef(false);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [odRequests, setOdRequests] = useState<OdRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [range, setRange] = useState<{ from: string; to: string } | null>(null);
+  const [range, setRange] = useState(seedRange);
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const { canCreateEvents: canCreate } = useViewerAccess();
@@ -96,38 +101,33 @@ export function ScheduleCalendar() {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    if (!range) return;
     let cancelled = false;
     async function run(from: string, to: string) {
+      const useSeed =
+        !seedUsed.current &&
+        reloadKey === 0 &&
+        from === seedRange.from &&
+        to === seedRange.to;
+      if (useSeed && !seedPromise) return;
       setLoading(true);
-      const [result, od] = await Promise.all([
-        listEvents({
-          dateFrom: from,
-          dateTo: to,
-          page: 1,
-          pageSize: 200,
-          sortBy: "date",
-          sortDir: "asc",
-          countTotal: false,
-        }),
-        listMyOd(from, to),
-      ]);
+      if (useSeed) seedUsed.current = true;
+      const payload = useSeed && seedPromise ? await seedPromise : await loadCalendarWindow(from, to);
       if (cancelled) return;
       setLoading(false);
-      if (!result.success) {
-        toast.error(result.error);
+      if (payload.eventsError) {
+        toast.error(payload.eventsError);
         setEvents([]);
       } else {
-        setEvents(result.data.data);
+        setEvents(payload.events);
       }
-      if (od.success) setOdRequests(od.data);
-      else if (!od.error.includes("od_requests")) toast.error(od.error);
+      if (!payload.odError) setOdRequests(payload.od);
+      else if (!payload.odError.includes("od_requests")) toast.error(payload.odError);
     }
     void run(range.from, range.to);
     return () => {
       cancelled = true;
     };
-  }, [range, reloadKey]);
+  }, [range, reloadKey, seedPromise, seedRange]);
 
   const conflictIds = useMemo(() => eventIdsWithConflicts(events), [events]);
   const fcEvents = useMemo(
@@ -268,12 +268,3 @@ export function ScheduleCalendar() {
   );
 }
 
-export function ScheduleCalendarSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-40" />
-      <Skeleton className="h-4 w-72 max-w-full" />
-      <Skeleton className="h-[min(720px,calc(100dvh-12.5rem))] w-full rounded-[28px]" />
-    </div>
-  );
-}
