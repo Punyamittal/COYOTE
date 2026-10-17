@@ -1,6 +1,6 @@
 /**
  * Reads "IR Student List and Details 2026.xlsx" (All Students sheet)
- * and writes login credentials for ScheduleHub.
+ * and writes login credentials for Coyote.
  *
  * Usage: node scripts/generate-ir-student-credentials.mjs
  */

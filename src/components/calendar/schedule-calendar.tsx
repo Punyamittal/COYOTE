@@ -8,6 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateSelectArg, EventClickArg, DatesSetArg, EventInput } from "@fullcalendar/core";
+import { getViewerAccess } from "@/actions/auth";
 import { listEvents } from "@/actions/events";
 import { eventIdsWithConflicts } from "@/lib/time-slots";
 import { EventDetailDialog } from "@/components/events/event-detail-dialog";
@@ -68,6 +69,11 @@ export function ScheduleCalendar() {
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [canCreate, setCanCreate] = useState(false);
+
+  useEffect(() => {
+    void getViewerAccess().then((access) => setCanCreate(access.canCreateEvents));
+  }, []);
 
   useEffect(() => {
     if (!range) return;
@@ -116,9 +122,10 @@ export function ScheduleCalendar() {
       if (!arg.allDay && arg.startStr.includes("T")) {
         start = arg.startStr.slice(11, 16);
       }
+      if (!canCreate) return;
       router.push(`/events/new?date=${encodeURIComponent(date)}&start=${encodeURIComponent(start)}`);
     },
-    [router]
+    [router, canCreate]
   );
 
   const onEventClick = useCallback((arg: EventClickArg) => {
@@ -159,7 +166,7 @@ export function ScheduleCalendar() {
               height="100%"
               expandRows
               stickyHeaderDates
-              selectable
+              selectable={canCreate}
               selectMirror
               dayMaxEvents={3}
               moreLinkClick="popover"

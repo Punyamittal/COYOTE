@@ -1,6 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getEvent } from "@/actions/events";
 import { EventForm } from "@/components/events/event-form";
+import { getSessionUser } from "@/lib/auth/session";
+import { canEditEvent } from "@/lib/permissions";
 
 export default async function EditEventPage({
   params,
@@ -8,10 +10,11 @@ export default async function EditEventPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const user = await getSessionUser();
   const result = await getEvent(id);
   if (!result.success) notFound();
   const e = result.data;
-
+  if (!canEditEvent(user, e.createdBy)) redirect(`/events/${e.id}`);
   return (
     <EventForm
       mode="edit"
@@ -25,7 +28,6 @@ export default async function EditEventPage({
         eventName: e.eventName,
         location: e.location,
         remarks: e.remarks,
-        description: e.description,
         department: e.department,
         organizer: e.organizer,
         contactInfo: e.contactInfo,

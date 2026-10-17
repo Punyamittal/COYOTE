@@ -154,7 +154,12 @@ export async function createEvent(
     if (!parsed.success) {
       return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
     }
-    const values = parsed.data;
+    const values = { ...parsed.data };
+    if (!values.name?.trim()) values.name = "—";
+    if (!values.registrationNumber?.trim()) {
+      values.registrationNumber = `open-${crypto.randomUUID().slice(0, 8)}`;
+    }
+    values.description = null;
     const startTime = normalizeTime(values.startTime);
     const endTime = normalizeTime(values.endTime);
     const classification = classifyEvent(startTime, endTime);
@@ -257,7 +262,12 @@ export async function updateEvent(
     if (!parsed.success) {
       return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
     }
-    const values = parsed.data;
+    const values = { ...parsed.data };
+    if (!values.name?.trim()) values.name = current.name || "—";
+    if (!values.registrationNumber?.trim()) {
+      values.registrationNumber = current.registrationNumber || `open-${crypto.randomUUID().slice(0, 8)}`;
+    }
+    values.description = null;
     const startTime = normalizeTime(values.startTime);
     const endTime = normalizeTime(values.endTime);
     const classification = classifyEvent(startTime, endTime);

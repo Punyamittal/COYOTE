@@ -11,6 +11,7 @@ import {
 import type { RowSelectionState } from "@tanstack/table-core";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getViewerAccess, type ViewerAccess } from "@/actions/auth";
 import { bulkDeleteEvents, listEvents } from "@/actions/events";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
@@ -44,6 +45,11 @@ export default function EventsPage() {
   const [search, setSearch] = useState(filters.search ?? "");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pending, startTransition] = useTransition();
+  const [access, setAccess] = useState<ViewerAccess | null>(null);
+
+  useEffect(() => {
+    void getViewerAccess().then(setAccess);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,13 +209,15 @@ export default function EventsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ExcelExportButton />
-          <ExcelImportDialog onImported={() => void load()} />
+          {access?.canImportEvents ? <ExcelImportDialog onImported={() => void load()} /> : null}
+          {access?.canCreateEvents ? (
           <Button asChild>
             <Link href="/events/new">
               <Plus className="h-4 w-4" />
               New Event
             </Link>
           </Button>
+          ) : null}
         </div>
       </div>
 
@@ -230,7 +238,7 @@ export default function EventsPage() {
             <Button type="button" variant="secondary" size="sm" onClick={applySearch}>
               Search
             </Button>
-            {selectedIds.length > 0 && (
+            {access?.canEditEvents && selectedIds.length > 0 && (
               <>
               <BulkEditDialog ids={selectedIds} onDone={() => { setRowSelection({}); void load(); }} />
               <AlertDialog>

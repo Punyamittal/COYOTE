@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/actions/auth";
 import type { SessionUser } from "@/types";
+import { BrandMark } from "@/components/brand/brand-mark";
+import { APP_TAGLINE } from "@/lib/brand";
 import { can, isAdminOrAbove, isMainAdmin } from "@/lib/permissions";
 
 const nav = [
@@ -75,8 +77,8 @@ export function AppShell({
       >
         <div className="glass-strong m-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] p-3">
           <div className="mb-4 flex items-center justify-between px-2 pt-2">
-            <Link href="/dashboard" className="text-lg font-extrabold tracking-tight">
-              Schedule<span className="text-[#3B82F6]">Hub</span>
+            <Link href="/dashboard" className="text-lg">
+              <BrandMark />
             </Link>
             <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu">
               <X className="h-5 w-5" />
@@ -140,7 +142,7 @@ export function AppShell({
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1 text-sm font-medium text-[var(--muted-foreground)]">
-            Event & Activity Scheduling
+            {APP_TAGLINE}
           </div>
           {can(user, "events:create") && (
             <Button asChild size="sm" variant="accent">

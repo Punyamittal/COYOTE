@@ -76,7 +76,7 @@ ON CONFLICT (role, permission) DO NOTHING;
 
 -- Only set defaults if the settings row is still at stock values
 UPDATE system_settings SET
-  institution_name = 'Institution Scheduling System',
+  institution_name = 'Coyote',
   timezone = 'Asia/Kolkata'
 WHERE id = 1
   AND institution_name = 'Institution'

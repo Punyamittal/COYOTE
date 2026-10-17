@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CalendarDays, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
-import { loginAction, setupInitialAdmin } from "@/actions/auth";
+import { loginAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-
+import { BrandMark } from "@/components/brand/brand-mark";
+import { APP_TAGLINE } from "@/lib/brand";
 export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -32,20 +32,6 @@ export default function LoginForm() {
       toast.success("Welcome back");
       router.push(params.get("next") || "/dashboard");
       router.refresh();
-    });
-  }
-
-  function onSetup() {
-    setFormError(null);
-    startTransition(async () => {
-      const result = await setupInitialAdmin();
-      if (!result.success) {
-        setFormError(result.error);
-        toast.error(result.error);
-        return;
-      }
-      toast.success(`Main Admin ready. Sign in as ${result.userId} and change your password.`);
-      setUserId(result.userId ?? "admin");
     });
   }
 
@@ -75,12 +61,10 @@ export default function LoginForm() {
             <CalendarDays className="h-5 w-5" strokeWidth={2.25} aria-hidden />
           </div>
           <div>
-            <p className="text-lg font-extrabold tracking-tight text-[var(--foreground)]">
-              Schedule<span className="text-[#3B82F6]">Hub</span>
+            <p className="text-lg text-[var(--foreground)]">
+              <BrandMark />
             </p>
-            <p className="text-xs font-medium text-[var(--muted-foreground)]">
-              Institutional scheduling
-            </p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)]">{APP_TAGLINE}</p>
           </div>
         </div>
         <p className="hidden text-xs font-medium text-[var(--muted-foreground)] sm:block">
@@ -192,44 +176,6 @@ export default function LoginForm() {
                 )}
               </Button>
             </form>
-
-            <details className="group glass mt-5 rounded-2xl open:glass-inset">
-              <summary
-                className={cn(
-                  "cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--muted-foreground)] transition-colors",
-                  "marker:content-none [&::-webkit-details-marker]:hidden",
-                  "hover:text-[var(--foreground)]"
-                )}
-              >
-                <span className="flex items-center justify-between gap-2">
-                  First-time server setup
-                  <span
-                    className="text-xs font-normal text-[var(--muted-foreground)] group-open:hidden"
-                    aria-hidden
-                  >
-                    Expand
-                  </span>
-                </span>
-              </summary>
-              <div className="space-y-3 px-4 pb-4 pt-1">
-                <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-                  Creates the Main Admin from{" "}
-                  <code className="rounded bg-white/60 px-1 py-0.5 text-[10px]">
-                    INITIAL_ADMIN_*
-                  </code>{" "}
-                  in your environment. Use only once on a fresh database.
-                </p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  onClick={onSetup}
-                  disabled={pending}
-                >
-                  Run initial Main Admin setup
-                </Button>
-              </div>
-            </details>
           </div>
         </section>
       </main>

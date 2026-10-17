@@ -28,7 +28,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Institution settings</CardTitle>
             <CardDescription>
-              Visible only to Main Admin. Changes apply across ScheduleHub.
+              Visible only to Main Admin. Changes apply across the Coyote app.
             </CardDescription>
           </CardHeader>
           <CardContent>

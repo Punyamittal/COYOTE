@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/auth/session";
 import { can, isMainAdmin, isAdminOrAbove } from "@/lib/permissions";
 import { writeAuditLog } from "@/lib/audit";
@@ -19,13 +20,22 @@ type ActionResult<T = unknown> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-function safeError(err: unknown, fallback: string): string {
-  console.error(err);
-  if (err instanceof Error) {
-    if (err.message === "UNAUTHORIZED") return "You must be logged in.";
-    if (err.message === "ACCOUNT_DISABLED") return "Your account is disabled.";
-    if (err.message === "FORBIDDEN") return "You do not have permission to perform this action.";
+function errorMessage(err: unknown): string | null {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    const msg = (err as { message: unknown }).message;
+    if (typeof msg === "string" && msg.length > 0) return msg;
   }
+  return null;
+}
+
+function safeError(err: unknown, fallback: string): string {
+  const message = errorMessage(err);
+  console.error("[admin]", message ?? fallback, err);
+  if (message === "UNAUTHORIZED") return "You must be logged in.";
+  if (message === "ACCOUNT_DISABLED") return "Your account is disabled.";
+  if (message === "FORBIDDEN") return "You do not have permission to perform this action.";
+  if (message) return message;
   return fallback;
 }
 
@@ -122,7 +132,7 @@ function mapTimeSlot(row: {
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
-  institutionName: "Institution",
+  institutionName: "Coyote",
   logoUrl: null,
   timezone: "Asia/Kolkata",
   defaultCalendarView: "dayGridMonth",
@@ -438,7 +448,7 @@ export async function listAuditLogs(
     const user = await requireUser();
     if (!can(user, "audit:read") && !isMainAdmin(user)) throw new Error("FORBIDDEN");
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("audit_logs")
       .select("*")

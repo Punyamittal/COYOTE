@@ -201,9 +201,12 @@ describe("permissions", () => {
     expect(roleHasPermission("ADMIN", "events:delete")).toBe(true);
   });
 
-  it("limits User to own updates", () => {
+  it("does not let User edit events or user records", () => {
     expect(roleHasPermission("USER", "events:update")).toBe(false);
-    expect(roleHasPermission("USER", "events:update_own")).toBe(true);
+    expect(roleHasPermission("USER", "events:update_own")).toBe(false);
+    expect(roleHasPermission("USER", "events:delete")).toBe(false);
+    expect(roleHasPermission("USER", "events:delete_own")).toBe(false);
+    expect(roleHasPermission("USER", "events:create")).toBe(false);
     expect(roleHasPermission("USER", "users:manage")).toBe(false);
   });
 });

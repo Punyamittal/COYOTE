@@ -103,7 +103,7 @@ export async function exportEventsExcel(
     const base64 = buffer.toString("base64");
 
     const stamp = new Date().toISOString().slice(0, 10);
-    const filename = `schedule-export-${stamp}.xlsx`;
+    const filename = `coyote-export-${stamp}.xlsx`;
 
     await writeAuditLog({
       userId: user.id,

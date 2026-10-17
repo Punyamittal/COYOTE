@@ -85,7 +85,7 @@ export function EventForm({
   } = form;
 
   useEffect(() => {
-    reset({ ...emptyDefaults, ...defaultValues });
+    reset({ ...emptyDefaults, ...defaultValues, description: null });
   }, [defaultValues, reset]);
 
   const startTime = useWatch({ control, name: "startTime" });
@@ -136,7 +136,7 @@ export function EventForm({
   }
 
   function onValid(values: EventFormValues) {
-    submitValues(values, false);
+    submitValues({ ...values, description: null }, false);
   }
 
   function onSaveAnyway() {
@@ -183,12 +183,6 @@ export function EventForm({
                   <Input type="time" {...register("endTime")} />
                 </Field>
               </div>
-              <Field label="Name *" error={errors.name?.message}>
-                <Input {...register("name")} placeholder="Participant / person name" />
-              </Field>
-              <Field label="Registration No. *" error={errors.registrationNumber?.message}>
-                <Input {...register("registrationNumber")} />
-              </Field>
               <Field label="Event / Work Name *" error={errors.eventName?.message} className="sm:col-span-2">
                 <Input {...register("eventName")} />
               </Field>
@@ -205,10 +199,7 @@ export function EventForm({
                 <Input {...register("contactInfo")} />
               </Field>
               <Field label="Remarks" error={errors.remarks?.message} className="sm:col-span-2">
-                <Textarea rows={2} {...register("remarks")} />
-              </Field>
-              <Field label="Description" error={errors.description?.message} className="sm:col-span-2">
-                <Textarea rows={3} {...register("description")} />
+                <Textarea rows={2} {...register("remarks")} placeholder="Optional notes" />
               </Field>
             </CardContent>
           </Card>

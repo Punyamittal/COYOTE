@@ -35,14 +35,7 @@ export const DEFAULT_PERMISSIONS: Record<Role, PermissionKey[]> = {
     "categories:manage",
     "reports:read",
   ],
-  USER: [
-    "events:create",
-    "events:read",
-    "events:update_own",
-    "events:delete_own",
-    "events:export",
-    "reports:read",
-  ],
+  USER: ["events:read", "events:export", "reports:read"],
 };
 
 export function roleHasPermission(role: Role, permission: PermissionKey): boolean {

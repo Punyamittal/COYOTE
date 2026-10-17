@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
 import { EventForm } from "@/components/events/event-form";
 import { getEvent } from "@/actions/events";
+import { getSessionUser } from "@/lib/auth/session";
+import { can } from "@/lib/permissions";
 import type { EventFormValues } from "@/lib/validation";
 
 export default async function NewEventPage({
@@ -7,6 +10,8 @@ export default async function NewEventPage({
 }: {
   searchParams: Promise<{ date?: string; start?: string; duplicate?: string }>;
 }) {
+  const user = await getSessionUser();
+  if (!can(user, "events:create")) redirect("/events");
   const params = await searchParams;
   let defaultValues: Partial<EventFormValues> = {};
   let mode: "create" | "duplicate" = "create";
@@ -25,7 +30,6 @@ export default async function NewEventPage({
         eventName: e.eventName,
         location: e.location,
         remarks: e.remarks,
-        description: e.description,
         department: e.department,
         organizer: e.organizer,
         contactInfo: e.contactInfo,

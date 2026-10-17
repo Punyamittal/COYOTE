@@ -3,11 +3,15 @@ import { getDashboardStats, getUpcomingEvents } from "@/actions/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getSessionUser } from "@/lib/auth/session";
+import { can } from "@/lib/permissions";
 import { formatTime12h } from "@/lib/time-slots";
 import { AlertTriangle, Calendar, MapPin, Sunrise, Sunset, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
+  const user = await getSessionUser();
+  const canCreate = can(user, "events:create");
   const [statsRes, upcomingRes] = await Promise.all([getDashboardStats(), getUpcomingEvents()]);
   const stats = statsRes.success ? statsRes.data : null;
   const upcoming = upcomingRes.success ? upcomingRes.data : [];
@@ -23,9 +27,11 @@ export default async function DashboardPage() {
             Your campus schedule, morning through evening — pressable, clear, and human.
           </p>
         </div>
+        {canCreate ? (
         <Button asChild variant="accent">
           <Link href="/events/new">Add Event</Link>
         </Button>
+        ) : null}
       </div>
 
       {!stats ? (
@@ -68,9 +74,11 @@ export default async function DashboardPage() {
           {upcoming.length === 0 ? (
             <div className="rounded-2xl neu-inset py-10 text-center">
               <p className="text-sm text-[var(--muted-foreground)]">No upcoming events scheduled.</p>
+              {canCreate ? (
               <Button asChild className="mt-3" size="sm" variant="accent">
                 <Link href="/events/new">Add Event</Link>
               </Button>
+              ) : null}
             </div>
           ) : (
             <ul className="space-y-2">

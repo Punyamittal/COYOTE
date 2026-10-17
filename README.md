@@ -1,4 +1,4 @@
-# ScheduleHub — Event & Activity Scheduling Management System
+# Coyote — Event & Activity Scheduling Management System
 
 Production-oriented Next.js app for institutional event scheduling, timetable views, conflict detection, Excel export/import, and role-based administration.
 
