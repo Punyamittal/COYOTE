@@ -208,5 +208,6 @@ describe("permissions", () => {
     expect(roleHasPermission("USER", "events:delete_own")).toBe(false);
     expect(roleHasPermission("USER", "events:create")).toBe(false);
     expect(roleHasPermission("USER", "users:manage")).toBe(false);
+    expect(roleHasPermission("USER", "reports:read")).toBe(false);
   });
 });

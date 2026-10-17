@@ -14,6 +14,12 @@ export type ActionResult<T = unknown> =
   | { success: true; data: T }
   | { success: false; error: string; conflicts?: ConflictResult };
 
+function withOwnReviewStatus(event: ScheduleEvent, row: EventRow, viewerId: string): ScheduleEvent {
+  const status = (row as EventRow & { od_status?: ScheduleEvent["odStatus"] }).od_status;
+  if (!status || row.created_by !== viewerId) return event;
+  return { ...event, odStatus: status };
+}
+
 function safeError(err: unknown): string {
   console.error(err);
   if (err instanceof Error) {
@@ -28,7 +34,7 @@ export async function listEvents(
   filters: EventFilters = {}
 ): Promise<ActionResult<PaginatedResult<ScheduleEvent>>> {
   try {
-    await requireUser();
+    const me = await requireUser();
     const supabase = await createClient();
     const page = filters.page ?? 1;
     const pageSize = Math.min(filters.pageSize ?? 50, 200);
@@ -92,7 +98,7 @@ export async function listEvents(
     const { data, error, count } = await query.range(from, to);
     if (error) throw error;
 
-    const events = (data as EventRow[]).map(mapEvent);
+    const events = (data as EventRow[]).map((row) => withOwnReviewStatus(mapEvent(row), row, me.id));
     const total = withCount ? (count ?? 0) : events.length;
     return {
       success: true,
@@ -111,11 +117,12 @@ export async function listEvents(
 
 export async function getEvent(id: string): Promise<ActionResult<ScheduleEvent>> {
   try {
-    await requireUser();
+    const me = await requireUser();
     const supabase = await createClient();
     const { data, error } = await supabase.from("events").select("*").eq("id", id).single();
     if (error) throw error;
-    return { success: true, data: mapEvent(data as EventRow) };
+    const row = data as EventRow;
+    return { success: true, data: withOwnReviewStatus(mapEvent(row), row, me.id) };
   } catch (err) {
     return { success: false, error: safeError(err) };
   }

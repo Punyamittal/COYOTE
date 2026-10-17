@@ -64,6 +64,7 @@ export interface ScheduleEvent {
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
+  odStatus?: "pending" | "approved" | "rejected" | null;
   conflictFlags?: ConflictFlag[];
 }
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
-import { can } from "@/lib/permissions";
+import { can, isMainAdmin } from "@/lib/permissions";
+import { OdReviewPanel } from "@/components/reports/od-review-panel";
 import { ReportsPanel } from "@/components/reports/reports-panel";
 
 export default async function ReportsPage() {
@@ -17,6 +18,7 @@ export default async function ReportsPage() {
           download in the browser.
         </p>
       </div>
+      {isMainAdmin(user) ? <OdReviewPanel /> : null}
       <ReportsPanel />
     </div>
   );

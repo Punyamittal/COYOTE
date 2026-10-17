@@ -7,13 +7,9 @@ import { toast } from "sonner";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 import { getViewerAccess, type ViewerAccess } from "@/actions/auth";
 import { deleteEvent } from "@/actions/events";
-import {
-  listEventVolunteers,
-  removeMyVolunteer,
-  saveMyVolunteer,
-  type VolunteerEntry,
-} from "@/actions/volunteers";
-import { Input } from "@/components/ui/input";
+import { listEventOd, removeMyOd, saveEventOd, type OdRequest, type OdSlot } from "@/actions/od";
+import { OdStatusBadge, odSetupHint } from "@/components/calendar/od-status-badge";
+import { OdTimeFields } from "@/components/calendar/od-time-fields";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -89,8 +85,9 @@ export function EventDetailContent({
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-semibold text-[var(--primary)]">
+          <h2 className="flex flex-wrap items-center gap-2 font-display text-xl font-semibold text-[var(--primary)]">
             {event.eventName}
+            <OdStatusBadge status={event.odStatus ?? null} />
           </h2>
           {!event.registrationNumber.startsWith("open-") && event.name !== "—" ? (
             <p className="text-sm text-[var(--muted-foreground)]">
@@ -132,7 +129,7 @@ export function EventDetailContent({
         </div>
       </dl>
 
-      <VolunteerSignup event={event} />
+      <EventOdSignup event={event} />
 
       {event.conflictFlags && event.conflictFlags.length > 0 && (
         <div className="rounded-md bg-[var(--conflict)] p-3 text-sm">
@@ -191,30 +188,36 @@ export function EventDetailContent({
   );
 }
 
-function VolunteerSignup({ event }: { event: ScheduleEvent }) {
-  const [volunteers, setVolunteers] = useState<VolunteerEntry[]>([]);
+function EventOdSignup({ event }: { event: ScheduleEvent }) {
+  const [requests, setRequests] = useState<OdRequest[]>([]);
   const [myId, setMyId] = useState<string | null>(null);
-  const [volunteered, setVolunteered] = useState(false);
-  const [startTime, setStartTime] = useState(event.startTime);
-  const [endTime, setEndTime] = useState(event.endTime);
+  const [mineId, setMineId] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [slots, setSlots] = useState<OdSlot[]>([
+    { startTime: event.startTime, endTime: event.endTime },
+  ]);
   const [pending, startTransition] = useTransition();
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void listEventVolunteers(event.id).then((result) => {
+    void listEventOd(event.id).then((result) => {
       if (cancelled) return;
       if (!result.success) {
         setLoadError(result.error);
         return;
       }
       setLoadError(null);
-      setVolunteers(result.data.volunteers);
+      setRequests(result.data.requests);
       setMyId(result.data.myProfileId);
-      const mine = result.data.volunteers.find((v) => v.profileId === result.data.myProfileId);
-      setVolunteered(Boolean(mine));
-      setStartTime(mine?.startTime ?? event.startTime);
-      setEndTime(mine?.endTime ?? event.endTime);
+      const mine = result.data.requests.find((row) => row.profileId === result.data.myProfileId);
+      setMineId(mine?.id ?? null);
+      setApplying(Boolean(mine));
+      setSlots(
+        mine?.slots.length
+          ? mine.slots
+          : [{ startTime: event.startTime, endTime: event.endTime }]
+      );
     });
     return () => {
       cancelled = true;
@@ -223,87 +226,78 @@ function VolunteerSignup({ event }: { event: ScheduleEvent }) {
 
   function save() {
     startTransition(async () => {
-      if (!volunteered) {
-        const result = await removeMyVolunteer(event.id);
+      if (!applying) {
+        if (!mineId) return;
+        const result = await removeMyOd(mineId);
         if (!result.success) {
           toast.error(result.error);
           return;
         }
-        setVolunteers((prev) => prev.filter((v) => v.profileId !== myId));
-        toast.success("Volunteer signup removed");
+        setRequests((prev) => prev.filter((row) => row.id !== mineId));
+        setMineId(null);
+        toast.success("OD removed");
         return;
       }
-      const result = await saveMyVolunteer({
-        eventId: event.id,
-        startTime,
-        endTime,
-      });
+      const result = await saveEventOd({ eventId: event.id, slots });
       if (!result.success) {
         toast.error(result.error);
         return;
       }
-      setVolunteers((prev) => {
-        const rest = prev.filter((v) => v.profileId !== result.data.profileId);
-        return [...rest, result.data].sort((a, b) => a.startTime.localeCompare(b.startTime));
+      setMineId(result.data.id);
+      setRequests((prev) => {
+        const rest = prev.filter((row) => row.profileId !== result.data.profileId);
+        return [...rest, result.data];
       });
-      toast.success("Volunteer time saved");
+      toast.success("OD saved");
     });
   }
 
   return (
     <div className="space-y-3 rounded-2xl border border-white/40 bg-white/30 p-4">
-      <p className="text-sm font-semibold text-[var(--foreground)]">Volunteer</p>
+      <p className="text-sm font-semibold text-[var(--foreground)]">Apply for OD</p>
       <p className="text-xs text-[var(--muted-foreground)]">
-        Use your account to say you volunteered and the time you need for this event.
+        Mark OD for this event. Add as many time ranges as you need on this day.
       </p>
-      {loadError ? (
-        <p className="text-xs text-red-700">
-          {loadError.includes("event_volunteers")
-            ? "Run supabase/migrations/004_event_volunteers.sql in the SQL editor, then try again."
-            : loadError}
-        </p>
-      ) : null}
+      {loadError ? <p className="text-xs text-red-700">{odSetupHint(loadError)}</p> : null}
       <label className="flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"
           className="h-4 w-4 accent-[#3B82F6]"
-          checked={volunteered}
-          onChange={(e) => setVolunteered(e.target.checked)}
+          checked={applying}
+          onChange={(e) => setApplying(e.target.checked)}
         />
-        I volunteered at this event
+        I need OD for this event
       </label>
-      {volunteered ? (
-        <div className="grid grid-cols-2 gap-3">
-          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Time I need from
-            <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-          </label>
-          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-            Until
-            <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-          </label>
-        </div>
-      ) : null}
+      {applying ? <OdTimeFields slots={slots} onChange={setSlots} /> : null}
       <Button type="button" size="sm" onClick={save} disabled={pending}>
-        {pending ? "Saving…" : "Save volunteer time"}
+        {pending ? "Saving…" : "Save OD"}
       </Button>
-      {volunteers.length > 0 ? (
-        <ul className="space-y-1 text-sm">
-          {volunteers.map((v) => (
-            <li key={v.id} className="flex justify-between gap-3">
-              <span>
-                {v.name}
-                {v.userId ? ` · ${v.userId}` : ""}
-                {v.profileId === myId ? " (you)" : ""}
+      {requests.length > 0 ? (
+        <ul className="space-y-2 text-sm">
+          {requests.map((row) => (
+            <li key={row.id}>
+              <span className="flex flex-wrap items-center gap-2 font-medium">
+                <span>
+                  {row.name}
+                  {row.userId ? ` · ${row.userId}` : ""}
+                  {row.profileId === myId ? " (you)" : ""}
+                </span>
               </span>
-              <span className="text-[var(--muted-foreground)]">
-                {formatTime12h(v.startTime)} – {formatTime12h(v.endTime)}
-              </span>
+              <div className="mt-1 space-y-1 text-[var(--muted-foreground)]">
+                {row.slots.map((slot, index) => (
+                  <div key={slot.id ?? index} className="flex flex-wrap items-center gap-2">
+                    <span>
+                      {formatTime12h(slot.startTime)} – {formatTime12h(slot.endTime)}
+                    </span>
+                    {row.profileId === myId ? <OdStatusBadge status={slot.status ?? null} /> : null}
+                  </div>
+                ))}
+              </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-[var(--muted-foreground)]">No volunteers yet.</p>
+        <p className="text-xs text-[var(--muted-foreground)]">No OD requests yet.</p>
       )}
     </div>
   );

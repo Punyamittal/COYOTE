@@ -10,8 +10,13 @@ import interactionPlugin from "@fullcalendar/interaction";
 import type { DateSelectArg, EventClickArg, DatesSetArg, EventInput } from "@fullcalendar/core";
 import { getViewerAccess } from "@/actions/auth";
 import { listEvents } from "@/actions/events";
+import { listMyOd } from "@/actions/od";
+import type { OdRequest } from "@/actions/od";
 import { eventIdsWithConflicts } from "@/lib/time-slots";
+import { OdApplyDialog } from "@/components/calendar/od-apply-dialog";
+import { odStatusTitle } from "@/components/calendar/od-status-badge";
 import { EventDetailDialog } from "@/components/events/event-detail-dialog";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DayCategory, ScheduleEvent } from "@/types";
@@ -41,13 +46,28 @@ function toFcEvents(events: ScheduleEvent[], conflictIds: Set<string>): EventInp
 
     return {
       id: e.id,
-      title: e.eventName,
+      title: e.odStatus
+        ? `${e.eventName} · ${e.odStatus === "approved" ? "Approved" : e.odStatus === "rejected" ? "Rejected" : "Pending"}`
+        : e.eventName,
       start: toLocalDateTime(e.date, e.startTime),
       end: toLocalDateTime(e.date, e.endTime),
       classNames,
       extendedProps: { event: e },
     };
   });
+}
+
+function odToFcEvents(rows: OdRequest[]): EventInput[] {
+  return rows.flatMap((row) =>
+    row.slots.map((slot, index) => ({
+      id: `od-${row.id}-${index}`,
+      title: odStatusTitle(slot.status ?? null),
+      start: toLocalDateTime(row.date, slot.startTime),
+      end: toLocalDateTime(row.date, slot.endTime),
+      classNames: ["event-od"],
+      extendedProps: { od: row },
+    }))
+  );
 }
 
 function toLocalDateTime(date: string, time: string): string {
@@ -65,11 +85,15 @@ function formatYmd(d: Date): string {
 export function ScheduleCalendar() {
   const router = useRouter();
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [odRequests, setOdRequests] = useState<OdRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [canCreate, setCanCreate] = useState(false);
+  const [odOpen, setOdOpen] = useState(false);
+  const [odDate, setOdDate] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     void getViewerAccess().then((access) => setCanCreate(access.canCreateEvents));
@@ -97,15 +121,22 @@ export function ScheduleCalendar() {
         return;
       }
       setEvents(result.data.data);
+      const od = await listMyOd(from, to);
+      if (cancelled) return;
+      if (od.success) setOdRequests(od.data);
+      else if (!od.error.includes("od_requests")) toast.error(od.error);
     }
     void run(range.from, range.to);
     return () => {
       cancelled = true;
     };
-  }, [range]);
+  }, [range, reloadKey]);
 
   const conflictIds = useMemo(() => eventIdsWithConflicts(events), [events]);
-  const fcEvents = useMemo(() => toFcEvents(events, conflictIds), [events, conflictIds]);
+  const fcEvents = useMemo(
+    () => [...toFcEvents(events, conflictIds), ...odToFcEvents(odRequests)],
+    [events, conflictIds, odRequests]
+  );
 
   const onDatesSet = useCallback((arg: DatesSetArg) => {
     const from = arg.startStr.slice(0, 10);
@@ -128,20 +159,44 @@ export function ScheduleCalendar() {
     [router, canCreate]
   );
 
-  const onEventClick = useCallback((arg: EventClickArg) => {
-    const event = arg.event.extendedProps.event as ScheduleEvent | undefined;
-    if (!event) return;
-    setSelected(event);
-    setDetailOpen(true);
-  }, []);
+  const onEventClick = useCallback(
+    (arg: EventClickArg) => {
+      const od = arg.event.extendedProps.od as OdRequest | undefined;
+      if (od && !od.eventId) {
+        setOdDate(od.date);
+        setOdOpen(true);
+        return;
+      }
+      const linked = od?.eventId
+        ? events.find((item) => item.id === od.eventId)
+        : undefined;
+      const event = (arg.event.extendedProps.event as ScheduleEvent | undefined) ?? linked;
+      if (!event) return;
+      setSelected(event);
+      setDetailOpen(true);
+    },
+    [events]
+  );
 
   return (
     <div className="flex min-h-0 flex-col gap-4">
-      <div className="shrink-0">
-        <h1 className="font-display text-2xl font-semibold text-[var(--primary)]">Calendar</h1>
-        <p className="text-sm text-[var(--muted-foreground)]">
-          Month, week, day, and list views. Click a slot to add an event.
-        </p>
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-[var(--primary)]">Calendar</h1>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Month, week, day, and list views. Apply for OD with or without an event.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="accent"
+          onClick={() => {
+            setOdDate(null);
+            setOdOpen(true);
+          }}
+        >
+          Apply for OD
+        </Button>
       </div>
 
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -204,6 +259,14 @@ export function ScheduleCalendar() {
       </Card>
 
       <EventDetailDialog event={selected} open={detailOpen} onOpenChange={setDetailOpen} />
+      <OdApplyDialog
+        open={odOpen}
+        date={odDate}
+        onOpenChange={(open) => {
+          setOdOpen(open);
+          if (!open) setReloadKey((value) => value + 1);
+        }}
+      />
     </div>
   );
 }
