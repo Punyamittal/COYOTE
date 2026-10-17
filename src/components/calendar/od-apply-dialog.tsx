@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const blankSlot = (): OdSlot => ({ startTime: "08:00", endTime: "09:00" });
 
@@ -30,6 +31,7 @@ export function OdApplyDialog({
   const [date, setDate] = useState(dateSeed || todayIST());
   const [requestId, setRequestId] = useState<string | null>(null);
   const [slots, setSlots] = useState<OdSlot[]>([blankSlot()]);
+  const [reason, setReason] = useState("");
   const [pending, startTransition] = useTransition();
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -49,6 +51,7 @@ export function OdApplyDialog({
       setLoadError(null);
       const row = result.data;
       setRequestId(row?.id ?? null);
+      setReason(row?.reason ?? "");
       setSlots(row?.slots.length ? row.slots : [blankSlot()]);
     });
     return () => {
@@ -58,9 +61,9 @@ export function OdApplyDialog({
 
   function save() {
     startTransition(async () => {
-      const result = await saveFreeOd({ date, slots });
+      const result = await saveFreeOd({ date, slots, reason });
       if (!result.success) {
-        toast.error(result.error);
+        toast.error(odSetupHint(result.error));
         return;
       }
       setRequestId(result.data.id);
@@ -98,6 +101,16 @@ export function OdApplyDialog({
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <OdTimeFields slots={slots} onChange={setSlots} />
+        <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+          Reason
+          <Textarea
+            required
+            value={reason}
+            maxLength={500}
+            placeholder="Why do you need OD?"
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </label>
         <div className="flex flex-wrap justify-end gap-2">
           {requestId ? (
             <Button type="button" variant="outline" onClick={remove} disabled={pending}>

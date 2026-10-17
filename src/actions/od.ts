@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/session";
-import { isMainAdmin } from "@/lib/permissions";
-import { normalizeTime } from "@/lib/time-slots";
+import { isAdminOrAbove, isMainAdmin } from "@/lib/permissions";
+import { formatTime12h, normalizeTime } from "@/lib/time-slots";
+import ExcelJS from "exceljs";
 
 export type OdSlot = {
   id?: string;
@@ -24,19 +25,18 @@ export type OdRequest = {
   name: string;
   userId: string;
   status: OdStatus | null;
+  reason: string;
   slots: OdSlot[];
 };
 
 type Result<T> = { success: true; data: T } | { success: false; error: string };
 
-const OD_SELECT_BASE =
-  "id, profile_id, event_id, date, status, start_time, end_time, start_time_2, end_time_2, profiles!profile_id(name, user_id), events!event_id(event_name)";
-
-function odSelect(withSlotStatus: boolean) {
+function odSelect(withSlotStatus: boolean, withReason = true) {
   const slots = withSlotStatus
     ? "od_request_slots(id, start_time, end_time, position, status)"
     : "od_request_slots(id, start_time, end_time, position)";
-  return `${OD_SELECT_BASE}, ${slots}`;
+  const reason = withReason ? "reason, " : "";
+  return `id, profile_id, event_id, date, status, ${reason}start_time, end_time, start_time_2, end_time_2, profiles!profile_id(name, user_id), events!event_id(event_name), ${slots}`;
 }
 
 function missingSlotStatus(message: string | undefined) {
@@ -52,11 +52,18 @@ async function selectOd(
     error: { message: string } | null;
   }>
 ) {
-  const first = await apply(supabase.from("od_requests").select(odSelect(true)));
-  if (missingSlotStatus(first.error?.message)) {
-    return apply(supabase.from("od_requests").select(odSelect(false)));
+  let withSlots = true;
+  let withReason = true;
+  let result = await apply(supabase.from("od_requests").select(odSelect(withSlots, withReason)));
+  if (missingSlotStatus(result.error?.message)) {
+    withSlots = false;
+    result = await apply(supabase.from("od_requests").select(odSelect(withSlots, withReason)));
   }
-  return first;
+  if (result.error?.message.includes("reason")) {
+    withReason = false;
+    result = await apply(supabase.from("od_requests").select(odSelect(withSlots, withReason)));
+  }
+  return result;
 }
 
 function trimTime(t: string | null | undefined): string {
@@ -115,6 +122,7 @@ type OdRow = {
   event_id: string | null;
   date: string;
   status?: OdStatus | null;
+  reason?: string | null;
   start_time: string;
   end_time: string;
   start_time_2: string | null;
@@ -147,8 +155,16 @@ function mapRow(row: OdRow, revealStatus: boolean): OdRequest {
     name: profile?.name ?? "Student",
     userId: profile?.user_id ?? "",
     status: revealStatus ? shared : null,
+    reason: revealStatus ? (row.reason ?? "").trim() : "",
     slots,
   };
+}
+
+function cleanReason(reason: string | undefined): string | null {
+  const text = (reason ?? "").trim();
+  if (!text) return null;
+  if (text.length > 500) return null;
+  return text;
 }
 
 function validateSlots(slots: OdSlot[], bounds?: { start: string; end: string }): string | null {
@@ -233,6 +249,7 @@ async function upsertMine(input: {
   eventId: string | null;
   date: string;
   slots: OdSlot[];
+  reason: string;
 }) {
   const user = await requireUser();
   const supabase = await createClient();
@@ -248,6 +265,7 @@ async function upsertMine(input: {
     end_time: normalized[0].endTime,
     start_time_2: normalized[1]?.startTime ?? null,
     end_time_2: normalized[1]?.endTime ?? null,
+    reason: input.reason,
   };
 
   let query = supabase.from("od_requests").select("id").eq("profile_id", user.id);
@@ -272,6 +290,7 @@ async function upsertMine(input: {
 
   revalidatePath("/calendar");
   revalidatePath("/reports");
+  revalidatePath("/od");
   if (input.eventId) revalidatePath(`/events/${input.eventId}`);
 
   return { success: true as const, data: mapRow(fresh as OdRow, true) };
@@ -304,6 +323,7 @@ export async function listEventOd(
 export async function saveEventOd(input: {
   eventId: string;
   slots: OdSlot[];
+  reason: string;
 }): Promise<Result<OdRequest>> {
   try {
     await requireUser();
@@ -321,11 +341,14 @@ export async function saveEventOd(input: {
       end: trimTime(event.end_time),
     });
     if (problem) return { success: false, error: problem };
+    const reason = cleanReason(input.reason);
+    if (!reason) return { success: false, error: "Enter a reason for this OD." };
 
     return upsertMine({
       eventId: input.eventId,
       date: String(event.date).slice(0, 10),
       slots: input.slots,
+      reason,
     });
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unable to save OD." };
@@ -363,12 +386,15 @@ export async function getMyFreeOd(date: string): Promise<Result<OdRequest | null
 export async function saveFreeOd(input: {
   date: string;
   slots: OdSlot[];
+  reason: string;
 }): Promise<Result<OdRequest>> {
   try {
     if (!input.date) return { success: false, error: "Choose a date." };
     const problem = validateSlots(input.slots);
     if (problem) return { success: false, error: problem };
-    return upsertMine({ eventId: null, date: input.date, slots: input.slots });
+    const reason = cleanReason(input.reason);
+    if (!reason) return { success: false, error: "Enter a reason for this OD." };
+    return upsertMine({ eventId: null, date: input.date, slots: input.slots, reason });
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unable to save OD." };
   }
@@ -473,6 +499,7 @@ export async function reviewCalendarEvent(
     if (error) return { success: false, error: error.message };
     revalidatePath("/calendar");
     revalidatePath("/reports");
+    revalidatePath("/od");
     return { success: true, data: null };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unable to update the event." };
@@ -498,6 +525,7 @@ export async function reviewOdSlot(
     if (error) return { success: false, error: error.message };
     revalidatePath("/calendar");
     revalidatePath("/reports");
+    revalidatePath("/od");
     return { success: true, data: null };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unable to update OD." };
@@ -515,8 +543,185 @@ export async function removeMyOd(id: string): Promise<Result<null>> {
       .eq("profile_id", user.id);
     if (error) return { success: false, error: error.message };
     revalidatePath("/calendar");
+    revalidatePath("/od");
     return { success: true, data: null };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Unable to remove OD." };
+  }
+}
+
+export type OdCount = {
+  applied: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+};
+
+export type MyOdSummary = {
+  total: OdCount;
+  calendar: OdCount;
+  requests: OdRequest[];
+  calendarEvents: CalendarEventReview[];
+};
+
+function countStatuses(statuses: OdStatus[]): OdCount {
+  return {
+    applied: statuses.length,
+    approved: statuses.filter((status) => status === "approved").length,
+    rejected: statuses.filter((status) => status === "rejected").length,
+    pending: statuses.filter((status) => status === "pending").length,
+  };
+}
+
+async function loadOwnedCalendarEvents(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  profileId: string
+) {
+  const full = await supabase
+    .from("events")
+    .select("id, event_name, date, start_time, end_time, location, od_status")
+    .eq("created_by", profileId)
+    .order("date", { ascending: false });
+  if (full.error?.message.includes("od_status")) {
+    const plain = await supabase
+      .from("events")
+      .select("id, event_name, date, start_time, end_time, location")
+      .eq("created_by", profileId)
+      .order("date", { ascending: false });
+    if (plain.error) return { error: plain.error.message, events: [] as CalendarEventReview[] };
+    return {
+      error: null,
+      events: ((plain.data ?? []) as Parameters<typeof mapCalendarEvent>[0][]).map(mapCalendarEvent),
+    };
+  }
+  if (full.error) return { error: full.error.message, events: [] as CalendarEventReview[] };
+  return {
+    error: null,
+    events: ((full.data ?? []) as Parameters<typeof mapCalendarEvent>[0][]).map(mapCalendarEvent),
+  };
+}
+
+export async function getMyOdSummary(): Promise<Result<MyOdSummary>> {
+  try {
+    const me = await requireUser();
+    const supabase = await createClient();
+    const { data, error } = await selectOd(supabase, (query) =>
+      query.eq("profile_id", me.id).order("date", { ascending: false })
+    );
+    if (error) return { success: false, error: error.message };
+    const requests = ((data ?? []) as OdRow[]).map((row) => mapRow(row, true));
+    const owned = await loadOwnedCalendarEvents(supabase, me.id);
+    if (owned.error) return { success: false, error: owned.error };
+
+    const applicationStatuses = requests.flatMap((row) =>
+      row.slots.map((slot) => slot.status ?? "pending")
+    );
+    const calendarStatuses = [
+      ...requests
+        .filter((row) => row.eventId)
+        .flatMap((row) => row.slots.map((slot) => slot.status ?? "pending")),
+      ...owned.events.map((event) => event.status),
+    ];
+    return {
+      success: true,
+      data: {
+        total: countStatuses([...applicationStatuses, ...owned.events.map((event) => event.status)]),
+        calendar: countStatuses(calendarStatuses),
+        requests,
+        calendarEvents: owned.events,
+      },
+    };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Unable to load your OD." };
+  }
+}
+
+export async function exportAllOdExcel(): Promise<
+  Result<{ base64: string; filename: string; count: number }>
+> {
+  try {
+    const me = await requireUser();
+    if (!isAdminOrAbove(me)) return { success: false, error: "Only an admin can export OD." };
+    const supabase = await createClient();
+    const { data, error } = await selectOd(supabase, (query) =>
+      query.order("date", { ascending: false }).order("start_time")
+    );
+    if (error) return { success: false, error: error.message };
+    const requests = ((data ?? []) as OdRow[]).map((row) => mapRow(row, true));
+
+    const eventsResult = await supabase
+      .from("events")
+      .select("id, event_name, date, start_time, end_time, location, od_status")
+      .order("date", { ascending: false });
+    const events = eventsResult.error?.message.includes("od_status")
+      ? []
+      : ((eventsResult.data ?? []) as Parameters<typeof mapCalendarEvent>[0][]).map(mapCalendarEvent);
+    if (eventsResult.error && !eventsResult.error.message.includes("od_status")) {
+      return { success: false, error: eventsResult.error.message };
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const applications = workbook.addWorksheet("OD applications");
+    applications.addRow([
+      "Student",
+      "Login ID",
+      "Date",
+      "Source",
+      "Event",
+      "From",
+      "Until",
+      "Status",
+      "Reason",
+    ]);
+    applications.getRow(1).font = { bold: true };
+    for (const request of requests) {
+      for (const slot of request.slots) {
+        applications.addRow([
+          request.name,
+          request.userId,
+          request.date,
+          request.eventId ? "Calendar event" : "No event",
+          request.eventName ?? "",
+          formatTime12h(slot.startTime),
+          formatTime12h(slot.endTime),
+          slot.status ?? "pending",
+          request.reason,
+        ]);
+      }
+    }
+    applications.columns.forEach((column) => {
+      column.width = 22;
+    });
+
+    const calendar = workbook.addWorksheet("Calendar events");
+    calendar.addRow(["Event", "Date", "From", "Until", "Location", "Status"]);
+    calendar.getRow(1).font = { bold: true };
+    for (const event of events) {
+      calendar.addRow([
+        event.eventName,
+        event.date,
+        formatTime12h(event.startTime),
+        formatTime12h(event.endTime),
+        event.location,
+        event.status,
+      ]);
+    }
+    calendar.columns.forEach((column) => {
+      column.width = 22;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    const count = requests.reduce((sum, request) => sum + request.slots.length, 0) + events.length;
+    return {
+      success: true,
+      data: {
+        base64,
+        filename: `coyote-od-${new Date().toISOString().slice(0, 10)}.xlsx`,
+        count,
+      },
+    };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Unable to export OD." };
   }
 }

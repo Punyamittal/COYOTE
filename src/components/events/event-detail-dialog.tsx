@@ -13,6 +13,7 @@ import { OdTimeFields } from "@/components/calendar/od-time-fields";
 import { formatTime12h } from "@/lib/time-slots";
 import { formatDateIST } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -196,6 +197,7 @@ function EventOdSignup({ event }: { event: ScheduleEvent }) {
   const [slots, setSlots] = useState<OdSlot[]>([
     { startTime: event.startTime, endTime: event.endTime },
   ]);
+  const [reason, setReason] = useState("");
   const [pending, startTransition] = useTransition();
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -213,6 +215,7 @@ function EventOdSignup({ event }: { event: ScheduleEvent }) {
       const mine = result.data.requests.find((row) => row.profileId === result.data.myProfileId);
       setMineId(mine?.id ?? null);
       setApplying(Boolean(mine));
+      setReason(mine?.reason ?? "");
       setSlots(
         mine?.slots.length
           ? mine.slots
@@ -238,9 +241,9 @@ function EventOdSignup({ event }: { event: ScheduleEvent }) {
         toast.success("OD removed");
         return;
       }
-      const result = await saveEventOd({ eventId: event.id, slots });
+      const result = await saveEventOd({ eventId: event.id, slots, reason });
       if (!result.success) {
-        toast.error(result.error);
+        toast.error(odSetupHint(result.error));
         return;
       }
       setMineId(result.data.id);
@@ -268,7 +271,21 @@ function EventOdSignup({ event }: { event: ScheduleEvent }) {
         />
         I need OD for this event
       </label>
-      {applying ? <OdTimeFields slots={slots} onChange={setSlots} /> : null}
+      {applying ? (
+        <>
+          <OdTimeFields slots={slots} onChange={setSlots} />
+          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+            Reason
+            <Textarea
+              required
+              value={reason}
+              maxLength={500}
+              placeholder="Why do you need OD?"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </label>
+        </>
+      ) : null}
       <Button type="button" size="sm" onClick={save} disabled={pending}>
         {pending ? "Saving…" : "Save OD"}
       </Button>
@@ -283,6 +300,9 @@ function EventOdSignup({ event }: { event: ScheduleEvent }) {
                   {row.profileId === myId ? " (you)" : ""}
                 </span>
               </span>
+              {row.profileId === myId && row.reason ? (
+                <p className="mt-1 text-sm">{row.reason}</p>
+              ) : null}
               <div className="mt-1 space-y-1 text-[var(--muted-foreground)]">
                 {row.slots.map((slot, index) => (
                   <div key={slot.id ?? index} className="flex flex-wrap items-center gap-2">

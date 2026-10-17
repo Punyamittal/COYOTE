@@ -17,6 +17,12 @@ export function odStatusTitle(status: OdStatus | null): string {
 }
 
 export function odSetupHint(error: string) {
+  if (
+    error.includes("reason") &&
+    (error.includes("column") || error.includes("schema"))
+  ) {
+    return "Run supabase/migrations/010_od_reason.sql in the SQL editor, then try again.";
+  }
   if (error.includes("od_status")) {
     return "Run supabase/migrations/009_event_review.sql in the SQL editor, then try again.";
   }

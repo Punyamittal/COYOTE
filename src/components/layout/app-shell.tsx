@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
+  ClipboardList,
   Table2,
   CalendarPlus,
   Users,
@@ -28,6 +29,7 @@ import { can, isAdminOrAbove, isMainAdmin } from "@/lib/permissions";
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: () => true },
   { href: "/calendar", label: "Calendar", icon: CalendarDays, show: () => true },
+  { href: "/od", label: "My OD", icon: ClipboardList, show: () => true },
   { href: "/timetable", label: "Timetable", icon: Table2, show: () => true },
   { href: "/events", label: "Events", icon: CalendarPlus, show: () => true },
   {

@@ -194,6 +194,7 @@ export function OdReviewPanel() {
                     {formatDateIST(row.date)}
                     {row.eventName ? ` · ${row.eventName}` : " · No event"}
                   </p>
+                  {row.reason ? <p className="mt-1 text-sm">{row.reason}</p> : null}
                 </div>
               </div>
               <ul className="space-y-2">
